@@ -8,10 +8,11 @@ unset($_SESSION['flash_error']);
 require __DIR__ . '/partials/head.php';
 ?>
 <main class="auth-layout">
-  <a class="back-link" href="index.php">&larr; Title</a>
-  <section class="auth-card">
+  <a class="back-link loading-link" href="index.php">&larr; Title</a>
+  <section class="auth-card premium-auth-card">
     <div class="auth-art register-art">
-      <div class="hero-slime slime-medium pink-slime" aria-hidden="true"></div>
+      <div class="auth-badge-row"><span>Starter coins</span><span>Cloud save</span></div>
+      <div class="hero-slime slime-medium pink-slime auth-slime" aria-hidden="true"></div>
       <p class="kicker">New galaxy save</p>
       <h1>Register</h1>
       <p class="muted">Create your online profile and start with beginner coins, gems, and the Nebula Green skin.</p>
@@ -31,7 +32,7 @@ require __DIR__ . '/partials/head.php';
         <input name="password" type="password" autocomplete="new-password" minlength="8" required>
       </label>
       <?php if ($error): ?><p class="form-error"><?php echo htmlspecialchars($error); ?></p><?php endif; ?>
-      <button class="primary" type="submit">Create Account</button>
+      <button class="primary auth-submit" type="submit">Create Account</button>
       <p class="switch-copy">Already registered? <a href="login.php">Login</a></p>
     </form>
   </section>

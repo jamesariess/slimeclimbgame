@@ -8,10 +8,11 @@ unset($_SESSION['flash_error']);
 require __DIR__ . '/partials/head.php';
 ?>
 <main class="auth-layout">
-  <a class="back-link" href="index.php">&larr; Title</a>
-  <section class="auth-card">
+  <a class="back-link loading-link" href="index.php">&larr; Title</a>
+  <section class="auth-card premium-auth-card">
     <div class="auth-art">
-      <div class="hero-slime slime-medium" aria-hidden="true"></div>
+      <div class="auth-badge-row"><span>Online save</span><span>Secure login</span></div>
+      <div class="hero-slime slime-medium auth-slime" aria-hidden="true"></div>
       <p class="kicker">Welcome back climber</p>
       <h1>Login</h1>
       <p class="muted">Load coins, skins, checkpoints, achievements, and galaxy progress from MySQL.</p>
@@ -27,8 +28,8 @@ require __DIR__ . '/partials/head.php';
         <input name="password" type="password" autocomplete="current-password" minlength="8" required>
       </label>
       <?php if ($error): ?><p class="form-error"><?php echo htmlspecialchars($error); ?></p><?php endif; ?>
-      <button class="primary" type="submit">Login</button>
-      <a class="text-link" href="forgot.php">Forgot password?</a>
+      <button class="primary auth-submit" type="submit">Login</button>
+      <a class="text-link loading-link" href="forgot.php">Forgot password?</a>
       <p class="switch-copy">No account yet? <a href="register.php">Create one</a></p>
     </form>
   </section>

@@ -58,6 +58,26 @@ $earnedAchievements = count($save['achievements']);
     <div class="ring ring-one"></div>
     <div class="ring ring-two"></div>
     <div class="ring ring-three"></div>
+    <div class="slime-status-hud">
+      <div class="status-title">
+        <span class="status-icon status-heart"></span>
+        <div>
+          <span class="card-tag">Slime Status</span>
+          <strong><?php echo htmlspecialchars($equippedSkin['name'] ?? 'Nebula Green'); ?></strong>
+        </div>
+      </div>
+      <div class="status-stat-row">
+        <span><b>ATK</b><?php echo (int) $stats['attack']; ?></span>
+        <span><b>DEF</b><?php echo (int) $stats['defense']; ?></span>
+        <span><b>JMP</b>+<?php echo (int) $stats['jump']; ?></span>
+      </div>
+      <div class="status-equipped-row">
+        <span>Weapon: <?php echo htmlspecialchars($loadout['offense']['name'] ?? 'Empty'); ?></span>
+        <span>Shield: <?php echo htmlspecialchars($loadout['defense']['name'] ?? 'Empty'); ?></span>
+        <span>Shoes: <?php echo htmlspecialchars($loadout['tool']['name'] ?? 'Empty'); ?></span>
+        <span>Wings: <?php echo htmlspecialchars($loadout['wings']['name'] ?? 'Empty'); ?></span>
+      </div>
+    </div>
     <div class="slime-loadout-stage">
       <?php if (!empty($loadout['wings'])): ?>
         <div class="slime-gear gear-wings" style="background-image: url('<?php echo htmlspecialchars($loadout['wings']['image_path'] ?: 'assets/images/items/nebula-wings.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['wings']['name']); ?>"></div>
@@ -103,23 +123,24 @@ $earnedAchievements = count($save['achievements']);
       <small>Recommended power: Level <?php echo max(1, (int) $save['level']); ?></small>
     </a>
     <a class="activity-card reward-card" href="rewards.php">
+      <div class="reward-chest-icon" aria-hidden="true"><span></span></div>
       <span class="card-tag">Streak Reward</span>
       <strong>Daily Drop Ready</strong>
-      <p>Claim coins, gems, and mission energy.</p>
+      <p>Open the chest for coins, gems, and mission energy.</p>
     </a>
     <a class="activity-card mission-card" href="achievements.php">
       <span class="card-tag">Mission Tracker</span>
       <strong><?php echo $earnedAchievements; ?> achievements</strong>
       <p>Next objective: reach Orion Peak.</p>
     </a>
-    <div class="activity-card status-card">
-      <span class="card-tag">Slime Status</span>
-      <strong>ATK <?php echo (int) $stats['attack']; ?> / DEF <?php echo (int) $stats['defense']; ?> / JMP +<?php echo (int) $stats['jump']; ?></strong>
-      <p>Offense: <?php echo htmlspecialchars($loadout['offense']['name'] ?? 'Empty'); ?></p>
-      <p>Defense: <?php echo htmlspecialchars($loadout['defense']['name'] ?? 'Empty'); ?></p>
-      <p>Shoes/Tool: <?php echo htmlspecialchars($loadout['tool']['name'] ?? 'Empty'); ?></p>
-      <p>Wings: <?php echo htmlspecialchars($loadout['wings']['name'] ?? 'Empty'); ?></p>
-      <?php foreach ($effects as $effect): ?><small><?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?> - <?php echo (int) $effect['seconds_remaining']; ?>s left</small><?php endforeach; ?>
+    <div class="activity-card potion-card">
+      <span class="card-tag">Active Potions</span>
+      <strong><?php echo count($effects); ?> running</strong>
+      <?php if ($effects): ?>
+        <?php foreach ($effects as $effect): ?><p><?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?> - <?php echo (int) $effect['seconds_remaining']; ?>s</p><?php endforeach; ?>
+      <?php else: ?>
+        <p>No potion active. Use one from inventory before a hard climb.</p>
+      <?php endif; ?>
     </div>
     <div class="rail-grid">
       <a class="activity-card compact-card" href="shop.php"><strong>Shop</strong><span>New skins</span></a>

@@ -11,8 +11,16 @@ $pageTitle = $pageTitle ?? 'Slime Climb Galaxy';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/game-ui.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/auth-menu.css">
+  <link rel="stylesheet" href="assets/css/home.css">
+  <link rel="stylesheet" href="assets/css/shop-polish.css">
+  <link rel="stylesheet" href="assets/css/achievements-polish.css">
 </head>
 <body class="<?php echo htmlspecialchars($bodyClass ?? ''); ?>">
   <div class="starfield" aria-hidden="true"></div>
   <div class="nebula-layer" aria-hidden="true"></div>
-
+  <div class="page-loader" aria-hidden="true">
+    <div class="loader-slime"></div>
+    <strong>Loading galaxy save...</strong>
+  </div>

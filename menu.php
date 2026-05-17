@@ -7,17 +7,26 @@ $bodyClass = 'menu-page';
 require __DIR__ . '/partials/head.php';
 ?>
 <main class="menu-shell">
-  <section class="menu-hero">
+  <section class="menu-hero premium-menu-hero">
     <div>
       <p class="kicker">Save loaded</p>
       <h1>Ready, <?php echo htmlspecialchars($user['username']); ?>?</h1>
-      <p class="muted">Your galaxy profile is online. Start opens the character hub before the level begins.</p>
+      <p class="muted">Your galaxy profile is online. Start opens the character hub with your loadout, daily rewards, and next mission.</p>
+      <div class="menu-save-pills">
+        <span>Level <?php echo $save['level']; ?></span>
+        <span><?php echo htmlspecialchars($save['rank']); ?></span>
+        <span><?php echo htmlspecialchars($save['current_checkpoint']); ?></span>
+      </div>
+    </div>
+    <div class="menu-slime-card" aria-hidden="true">
+      <div class="hero-slime slime-medium"></div>
+      <span></span><span></span><span></span>
     </div>
     <div class="menu-actions">
-      <a class="button primary button-xl" href="home.php">Start</a>
-      <a class="button secondary button-xl" href="settings.php">Settings</a>
+      <a class="button primary button-xl loading-link" href="home.php">Start</a>
+      <a class="button secondary button-xl loading-link" href="settings.php">Settings</a>
       <?php if (is_admin($user)): ?>
-        <a class="button secondary button-xl" href="admin_panel.php">Admin Panel</a>
+        <a class="button secondary button-xl loading-link" href="admin_panel.php">Admin Panel</a>
       <?php endif; ?>
       <form action="actions/logout.php" method="post">
         <?php echo csrf_field(); ?>

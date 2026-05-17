@@ -35,3 +35,9 @@ document.addEventListener("pointerdown", (event) => {
     startAmbientMusic();
   }
 });
+
+document.querySelectorAll(".loading-link").forEach((link) => {
+  link.addEventListener("click", () => {
+    document.body.classList.add("is-loading-next-page");
+  });
+});

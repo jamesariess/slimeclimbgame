@@ -1,0 +1,82 @@
+/* Shop polish: collectible skin cards, rarity shine, cute item presentation. */
+
+.shop-featured {
+  border-radius: 36px 24px 44px 24px;
+}
+
+.featured-showcase {
+  transform-style: preserve-3d;
+}
+
+.featured-showcase::after {
+  content: "";
+  position: absolute;
+  inset: 18% 8%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(103,255,147,.24), transparent 62%);
+  filter: blur(16px);
+}
+
+.premium-item-card {
+  border-radius: 26px 18px 34px 18px;
+}
+
+.premium-item-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(140deg, rgba(255,255,255,.16), transparent 38%, rgba(69,239,255,.12));
+  pointer-events: none;
+}
+
+.premium-item-card:hover .shop-slime,
+.premium-item-card:hover .slime-asset {
+  transform: translateY(-8px) scale(1.06);
+}
+
+.shop-slime {
+  position: relative;
+  box-shadow:
+    inset -16px -18px rgba(0,0,0,.16),
+    0 0 34px rgba(103,255,147,.42);
+}
+
+.shop-slime::before {
+  content: "";
+  position: absolute;
+  width: 18%;
+  height: 22%;
+  left: 24%;
+  top: 18%;
+  border-radius: 50%;
+  background: rgba(255,255,255,.78);
+}
+
+.shop-slime::after {
+  content: "";
+  position: absolute;
+  width: 30%;
+  height: 8%;
+  left: 35%;
+  top: 58%;
+  border-radius: 999px;
+  border-bottom: 4px solid rgba(5, 15, 30, .55);
+}
+
+.premium-item-card.rarity-legendary {
+  box-shadow: 0 24px 70px rgba(0,0,0,.34), 0 0 34px rgba(255,209,102,.22);
+}
+
+.premium-item-card.rarity-mythic {
+  box-shadow: 0 24px 70px rgba(0,0,0,.34), 0 0 38px rgba(255,95,200,.22), 0 0 54px rgba(69,239,255,.16);
+}
+
+.item-stats span {
+  border-radius: 999px;
+}
+
+.premium-buy {
+  border-radius: 16px;
+}
