@@ -6,6 +6,7 @@ $today = date('Y-m-d');
 $claimed = ($save['progress']['lastDailyReward'] ?? '') === $today;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$claimed) {
+    verify_csrf_from_post();
     $save['coins'] += 50;
     $save['gems'] += 1;
     $save['progress']['lastDailyReward'] = $today;

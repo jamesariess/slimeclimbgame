@@ -427,6 +427,13 @@ function save_player_progress(int $userId, array $save): void
     if (!in_array($checkpoint, $allowedCheckpoints, true)) {
         $checkpoint = $current['current_checkpoint'];
     }
+    $rankName = rank_for_level($newLevel);
+    $allowedAchievements = allowed_progress_achievements($save, $current, [
+        'level' => $newLevel,
+        'xp' => $newXp,
+        'coins' => $newCoins,
+        'checkpoint' => $checkpoint,
+    ]);
 
     $stmt = db()->prepare(
         'UPDATE player_saves
@@ -441,16 +448,54 @@ function save_player_progress(int $userId, array $save): void
         ':xp' => $newXp,
         ':coins' => $newCoins,
         ':gems' => $newGems,
-        ':rank_name' => substr((string) ($save['rank'] ?? 'Rookie Comet'), 0, 40),
+        ':rank_name' => $rankName,
         ':current_checkpoint' => $checkpoint,
         ':skins' => $current['skins'],
-        ':achievements' => json_encode(array_values($save['achievements'] ?? [])),
+        ':achievements' => json_encode($allowedAchievements),
         ':progress' => json_encode((object) ($save['progress'] ?? [])),
     ]);
 
-    foreach (($save['achievements'] ?? []) as $achievementName) {
-        award_achievement_by_name($userId, (string) $achievementName);
+    foreach ($allowedAchievements as $achievementName) {
+        award_achievement_by_name($userId, $achievementName);
     }
+}
+
+function rank_for_level(int $level): string
+{
+    if ($level >= 10) {
+        return 'Galaxy Master';
+    }
+    if ($level >= 5) {
+        return 'Nebula Climber';
+    }
+    if ($level >= 2) {
+        return 'Moon Hopper';
+    }
+    return 'Rookie Comet';
+}
+
+function allowed_progress_achievements(array $postedSave, array $current, array $validated): array
+{
+    $posted = array_flip(array_map('strval', $postedSave['achievements'] ?? []));
+    $allowed = [];
+
+    if (isset($posted['First Launch'])) {
+        $allowed[] = 'First Launch';
+    }
+    if (isset($posted['Coin Comet']) && $validated['coins'] > (int) $current['coins']) {
+        $allowed[] = 'Coin Comet';
+    }
+    if (isset($posted['Gravity Master'])) {
+        $allowed[] = 'Gravity Master';
+    }
+    if (isset($posted['Checkpoint Chaser']) && $validated['checkpoint'] !== $current['current_checkpoint']) {
+        $allowed[] = 'Checkpoint Chaser';
+    }
+    if (isset($posted['Galaxy Climber']) && $validated['checkpoint'] === 'Orion Peak') {
+        $allowed[] = 'Galaxy Climber';
+    }
+
+    return array_values(array_unique($allowed));
 }
 
 function json_response(array $payload, int $status = 200): never
