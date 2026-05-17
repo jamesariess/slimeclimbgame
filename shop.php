@@ -81,6 +81,15 @@ require __DIR__ . '/partials/player_nav.php';
       <?php $isOwned = $ownedItem !== null; ?>
       <?php $isEquipped = $isOwned && (int) ($ownedItem['equipped'] ?? 0) === 1; ?>
       <?php $coinPrice = effective_coin_price($item); ?>
+      <?php $typeLabel = match ($item['item_type']) {
+          'skin' => 'Skin',
+          'offense' => 'Weapon',
+          'defense' => 'Shield',
+          'tool' => 'Shoes',
+          'wings' => 'Wings',
+          'potion' => 'Potion',
+          default => ucfirst((string) $item['item_type']),
+      }; ?>
       <article class="premium-item-card rarity-<?php echo htmlspecialchars($item['rarity']); ?> <?php echo htmlspecialchars($item['tone']); ?> <?php echo $isOwned ? 'owned' : ''; ?> <?php echo $isEquipped ? 'equipped' : ''; ?> <?php echo $index % 5 === 0 ? 'wide-card' : ''; ?>">
         <?php if ((int) $item['sale_percent'] > 0): ?><span class="sale-ribbon">-<?php echo (int) $item['sale_percent']; ?>%</span><?php endif; ?>
         <?php if (!empty($item['limited_until'])): ?><span class="limited-tag">Limited</span><?php endif; ?>
@@ -98,17 +107,20 @@ require __DIR__ . '/partials/player_nav.php';
         <?php endif; ?>
         <div class="item-copy">
           <div class="item-meta-row">
-            <span class="card-tag"><?php echo htmlspecialchars($item['item_type']); ?></span>
+            <span class="shop-type-pill type-<?php echo htmlspecialchars($item['item_type']); ?>">
+              <span class="shop-type-icon" aria-hidden="true"></span>
+              <?php echo htmlspecialchars($typeLabel); ?>
+            </span>
             <span class="rarity-chip rarity-<?php echo htmlspecialchars($item['rarity']); ?>"><?php echo htmlspecialchars($item['rarity']); ?></span>
           </div>
           <h2><?php echo htmlspecialchars($item['name']); ?></h2>
           <p><?php echo htmlspecialchars($item['description']); ?></p>
           <div class="item-stats">
-            <?php if ((int) $item['stat_attack'] !== 0): ?><span>ATK +<?php echo (int) $item['stat_attack']; ?></span><?php endif; ?>
-            <?php if ((int) $item['stat_defense'] !== 0): ?><span>DEF +<?php echo (int) $item['stat_defense']; ?></span><?php endif; ?>
-            <?php if ((int) $item['stat_jump'] !== 0): ?><span>JMP +<?php echo (int) $item['stat_jump']; ?></span><?php endif; ?>
-            <?php if ($item['item_type'] === 'potion'): ?><span><?php echo (int) $item['effect_duration_seconds']; ?>s timer</span><?php endif; ?>
-            <?php if ($item['power_effect'] !== ''): ?><span><?php echo htmlspecialchars($item['power_effect']); ?></span><?php endif; ?>
+            <?php if ((int) $item['stat_attack'] !== 0): ?><span class="stat-chip stat-atk"><i aria-hidden="true"></i>+<?php echo (int) $item['stat_attack']; ?></span><?php endif; ?>
+            <?php if ((int) $item['stat_defense'] !== 0): ?><span class="stat-chip stat-def"><i aria-hidden="true"></i>+<?php echo (int) $item['stat_defense']; ?></span><?php endif; ?>
+            <?php if ((int) $item['stat_jump'] !== 0): ?><span class="stat-chip stat-jmp"><i aria-hidden="true"></i>+<?php echo (int) $item['stat_jump']; ?></span><?php endif; ?>
+            <?php if ($item['item_type'] === 'potion'): ?><span class="stat-chip stat-time"><i aria-hidden="true"></i><?php echo (int) $item['effect_duration_seconds']; ?>s</span><?php endif; ?>
+            <?php if ($item['power_effect'] !== ''): ?><span class="effect-chip"><?php echo htmlspecialchars($item['power_effect']); ?></span><?php endif; ?>
           </div>
         </div>
         <div class="item-footer">

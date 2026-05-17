@@ -77,6 +77,177 @@
   border-radius: 999px;
 }
 
+.shop-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 6px 10px 6px 7px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(255,255,255,.08);
+  font-size: .76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.shop-type-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--lime), var(--cyan));
+  box-shadow: 0 0 14px rgba(69,239,255,.34);
+}
+
+.shop-type-icon::before,
+.shop-type-icon::after,
+.stat-chip i::before,
+.stat-chip i::after {
+  content: "";
+  position: absolute;
+  display: block;
+}
+
+.type-skin .shop-type-icon::before {
+  width: 14px;
+  height: 10px;
+  border-radius: 50%;
+  background: #06111a;
+}
+
+.type-offense .shop-type-icon::before {
+  width: 4px;
+  height: 16px;
+  border-radius: 4px;
+  background: #06111a;
+  transform: rotate(40deg);
+}
+
+.type-defense .shop-type-icon::before {
+  width: 13px;
+  height: 15px;
+  background: #06111a;
+  clip-path: polygon(50% 0, 90% 18%, 82% 72%, 50% 100%, 18% 72%, 10% 18%);
+}
+
+.type-tool .shop-type-icon::before {
+  width: 15px;
+  height: 8px;
+  border-radius: 8px 10px 5px 6px;
+  background: #06111a;
+}
+
+.type-wings .shop-type-icon::before,
+.type-wings .shop-type-icon::after {
+  width: 10px;
+  height: 13px;
+  border-radius: 80% 20% 80% 20%;
+  background: #06111a;
+}
+
+.type-wings .shop-type-icon::before {
+  left: 4px;
+  transform: rotate(-28deg);
+}
+
+.type-wings .shop-type-icon::after {
+  right: 4px;
+  transform: scaleX(-1) rotate(-28deg);
+}
+
+.type-potion .shop-type-icon::before {
+  width: 10px;
+  height: 14px;
+  border-radius: 4px 4px 6px 6px;
+  background: #06111a;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 9px;
+}
+
+.stat-chip i {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+}
+
+.stat-atk i::before {
+  width: 4px;
+  height: 15px;
+  left: 7px;
+  top: 1px;
+  border-radius: 3px;
+  background: var(--cyan);
+  transform: rotate(42deg);
+}
+
+.stat-def i::before {
+  inset: 2px 4px;
+  background: var(--gold);
+  clip-path: polygon(50% 0, 90% 20%, 78% 76%, 50% 100%, 22% 76%, 10% 20%);
+}
+
+.stat-jmp i::before {
+  width: 12px;
+  height: 12px;
+  left: 3px;
+  top: 4px;
+  border-left: 4px solid var(--lime);
+  border-top: 4px solid var(--lime);
+  transform: rotate(45deg);
+}
+
+.stat-time i::before {
+  inset: 3px;
+  border: 3px solid var(--pink);
+  border-radius: 50%;
+}
+
+.stat-time i::after {
+  width: 2px;
+  height: 6px;
+  left: 8px;
+  top: 5px;
+  background: var(--pink);
+}
+
+.effect-chip {
+  flex-basis: 100%;
+  color: var(--muted);
+  background: rgba(255,255,255,.055) !important;
+}
+
 .premium-buy {
   border-radius: 16px;
+}
+
+@media (max-width: 680px) {
+  .shop-showcase {
+    gap: 14px;
+  }
+
+  .premium-item-card,
+  .premium-item-card.wide-card {
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .item-meta-row {
+    align-items: center;
+  }
+
+  .shop-type-pill {
+    font-size: .7rem;
+  }
 }

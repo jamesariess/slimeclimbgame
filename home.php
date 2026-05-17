@@ -15,15 +15,22 @@ $nextLevelXp = 100 - $xpPercent;
 $currentCheckpoint = htmlspecialchars($save['current_checkpoint']);
 $ownedSkins = count($save['skins']);
 $earnedAchievements = count($save['achievements']);
+$atkPercent = min(100, max(12, (int) $stats['attack'] * 4));
+$defPercent = min(100, max(12, (int) $stats['defense'] * 5));
+$jumpPercent = min(100, max(12, (int) $stats['jump'] * 9));
+$inventoryPercent = min(100, (int) round((count(get_player_inventory((int) $user['id'])) / 30) * 100));
 ?>
 <main class="game-hub">
+  <div class="hub-cosmic-fog" aria-hidden="true"></div>
+  <div class="hub-light-streak streak-a" aria-hidden="true"></div>
+  <div class="hub-light-streak streak-b" aria-hidden="true"></div>
   <section class="profile-panel hub-glass">
     <div class="profile-topline">
       <div class="avatar-orb"><?php echo strtoupper(substr($user['username'], 0, 1)); ?></div>
       <div>
         <p class="kicker">Pilot profile</p>
         <h2><?php echo htmlspecialchars($user['username']); ?></h2>
-        <p class="rank-label"><?php echo htmlspecialchars($save['rank']); ?></p>
+        <p class="rank-label premium-rank-badge"><?php echo htmlspecialchars($save['rank']); ?></p>
       </div>
     </div>
     <div class="level-medallion">
@@ -38,11 +45,15 @@ $earnedAchievements = count($save['achievements']);
       <div class="xp-bar premium-xp"><span style="width: <?php echo $xpPercent; ?>%"></span></div>
       <p class="unlock-preview">Next: Comet Trail aura at Level <?php echo (int) $save['level'] + 1; ?></p>
     </div>
-    <div class="wallet-grid premium-wallet">
-      <div><span>Coins</span><strong><?php echo (int) $save['coins']; ?></strong></div>
-      <div><span>Gems</span><strong><?php echo (int) $save['gems']; ?></strong></div>
+    <div class="wallet-grid premium-wallet cute-wallet">
+      <div><span class="wallet-icon coin-icon" aria-hidden="true"></span><span>Coins</span><strong><?php echo (int) $save['coins']; ?></strong></div>
+      <div><span class="wallet-icon gem-icon" aria-hidden="true"></span><span>Gems</span><strong><?php echo (int) $save['gems']; ?></strong></div>
+    </div>
+    <div class="profile-medals" aria-label="Profile medals">
+      <span></span><span></span><span></span>
     </div>
     <div class="mini-mission">
+      <span class="quest-sticker" aria-hidden="true"></span>
       <span>Daily Challenge</span>
       <strong>Collect 25 comet coins</strong>
       <small>Reward: 50 coins + streak charge</small>
@@ -62,14 +73,15 @@ $earnedAchievements = count($save['achievements']);
       <div class="status-title">
         <span class="status-icon status-heart"></span>
         <div>
-          <span class="card-tag">Slime Status</span>
+          <span class="card-tag">Mythic Slime Status</span>
           <strong><?php echo htmlspecialchars($equippedSkin['name'] ?? 'Nebula Green'); ?></strong>
         </div>
+        <span class="rarity-label">Galaxy</span>
       </div>
       <div class="status-stat-row">
-        <span><b>ATK</b><?php echo (int) $stats['attack']; ?></span>
-        <span><b>DEF</b><?php echo (int) $stats['defense']; ?></span>
-        <span><b>JMP</b>+<?php echo (int) $stats['jump']; ?></span>
+        <span class="stat-capsule stat-attack"><i aria-hidden="true"></i><b>ATK</b><strong><?php echo (int) $stats['attack']; ?></strong><em style="width: <?php echo $atkPercent; ?>%"></em></span>
+        <span class="stat-capsule stat-defense"><i aria-hidden="true"></i><b>DEF</b><strong><?php echo (int) $stats['defense']; ?></strong><em style="width: <?php echo $defPercent; ?>%"></em></span>
+        <span class="stat-capsule stat-jump"><i aria-hidden="true"></i><b>JMP</b><strong>+<?php echo (int) $stats['jump']; ?></strong><em style="width: <?php echo $jumpPercent; ?>%"></em></span>
       </div>
       <div class="status-equipped-row">
         <span>Weapon: <?php echo htmlspecialchars($loadout['offense']['name'] ?? 'Empty'); ?></span>
@@ -78,7 +90,12 @@ $earnedAchievements = count($save['achievements']);
         <span>Wings: <?php echo htmlspecialchars($loadout['wings']['name'] ?? 'Empty'); ?></span>
       </div>
     </div>
-    <div class="slime-loadout-stage">
+    <div class="slime-loadout-stage mascot-card">
+      <div class="mascot-rarity-frame" aria-hidden="true"></div>
+      <div class="mascot-badges" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="power-stars" aria-label="Power stars"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="mood-bubble" aria-hidden="true">Happy</div>
+      <div class="aura-particles" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
       <?php if (!empty($loadout['wings'])): ?>
         <div class="slime-gear gear-wings" style="background-image: url('<?php echo htmlspecialchars($loadout['wings']['image_path'] ?: 'assets/images/items/nebula-wings.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['wings']['name']); ?>"></div>
       <?php endif; ?>
@@ -87,10 +104,13 @@ $earnedAchievements = count($save['achievements']);
           <img src="<?php echo htmlspecialchars($equippedSkin['image_path']); ?>" alt="<?php echo htmlspecialchars($equippedSkin['name']); ?>">
         </div>
       <?php else: ?>
-        <div class="hero-slime character-slime <?php echo htmlspecialchars($equippedSkin['tone'] ?? 'green'); ?>" aria-hidden="true">
+        <div class="hero-slime character-slime adorable-slime <?php echo htmlspecialchars($equippedSkin['tone'] ?? 'green'); ?>" aria-hidden="true">
           <span class="eye eye-left"></span>
           <span class="eye eye-right"></span>
           <span class="smile"></span>
+          <span class="blush blush-left"></span>
+          <span class="blush blush-right"></span>
+          <span class="shine-dot"></span>
         </div>
       <?php endif; ?>
       <?php if (!empty($loadout['tool'])): ?>
@@ -117,6 +137,8 @@ $earnedAchievements = count($save['achievements']);
 
   <section class="hub-actions activity-rail">
     <a class="activity-card featured-run" href="game.php">
+      <div class="panel-illustration stage-thumb" aria-hidden="true"><span></span></div>
+      <span class="danger-pulse" aria-hidden="true"></span>
       <span class="card-tag">Continue Run</span>
       <strong><?php echo $currentCheckpoint; ?></strong>
       <p>Gravity lanes unstable. Boss gate charging.</p>
@@ -129,24 +151,25 @@ $earnedAchievements = count($save['achievements']);
       <p>Open the chest for coins, gems, and mission energy.</p>
     </a>
     <a class="activity-card mission-card" href="achievements.php">
+      <div class="panel-illustration medal-stack" aria-hidden="true"><span></span><span></span><span></span></div>
       <span class="card-tag">Mission Tracker</span>
       <strong><?php echo $earnedAchievements; ?> achievements</strong>
       <p>Next objective: reach Orion Peak.</p>
     </a>
-    <div class="activity-card potion-card">
-      <span class="card-tag">Active Potions</span>
-      <strong><?php echo count($effects); ?> running</strong>
-      <?php if ($effects): ?>
-        <?php foreach ($effects as $effect): ?><p><?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?> - <?php echo (int) $effect['seconds_remaining']; ?>s</p><?php endforeach; ?>
-      <?php else: ?>
-        <p>No potion active. Use one from inventory before a hard climb.</p>
-      <?php endif; ?>
-    </div>
     <div class="rail-grid">
-      <a class="activity-card compact-card" href="shop.php"><strong>Shop</strong><span>New skins</span></a>
-      <a class="activity-card compact-card" href="inventory.php"><strong>Inventory</strong><span><?php echo $ownedSkins; ?> owned</span></a>
+      <a class="activity-card compact-card shop-mini-card" href="shop.php">
+        <span class="gift-icon" aria-hidden="true"></span>
+        <strong>Shop</strong><span>Sale skins</span>
+      </a>
+      <a class="activity-card compact-card inventory-mini-card" href="inventory.php">
+        <span class="item-thumbs" aria-hidden="true"><i></i><i></i><i></i></span>
+        <strong>Inventory</strong><span><?php echo $ownedSkins; ?> owned</span>
+        <em class="capacity-bar"><i style="width: <?php echo $inventoryPercent; ?>%"></i></em>
+      </a>
     </div>
     <a class="activity-card event-card muted-tile" href="leaderboard.php">
+      <div class="event-artwork" aria-hidden="true"><span></span></div>
+      <span class="event-badge">Live Soon</span>
       <span class="card-tag">Season Event</span>
       <strong>Nebula Cup</strong>
       <p>Multiplayer races opening soon.</p>

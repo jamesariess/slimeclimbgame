@@ -21,6 +21,13 @@ $pageTitle = $pageTitle ?? 'Slime Climb Galaxy';
   <div class="starfield" aria-hidden="true"></div>
   <div class="nebula-layer" aria-hidden="true"></div>
   <div class="page-loader" aria-hidden="true">
-    <div class="loader-slime"></div>
-    <strong>Loading galaxy save...</strong>
+    <div class="loader-card">
+      <div class="loader-orbit">
+        <span></span><span></span><span></span>
+        <div class="loader-slime"></div>
+      </div>
+      <strong>Preparing your climb...</strong>
+      <p>Charging jump boots, checking rewards, and syncing your slime save.</p>
+      <div class="loader-progress"><span></span></div>
+    </div>
   </div>

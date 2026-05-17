@@ -41,3 +41,9 @@ document.querySelectorAll(".loading-link").forEach((link) => {
     document.body.classList.add("is-loading-next-page");
   });
 });
+
+document.querySelectorAll("form").forEach((form) => {
+  form.addEventListener("submit", () => {
+    document.body.classList.add("is-loading-next-page");
+  });
+});
