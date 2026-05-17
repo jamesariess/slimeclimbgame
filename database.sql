@@ -37,6 +37,13 @@ CREATE TABLE IF NOT EXISTS shop_items (
   price_coins INT UNSIGNED NOT NULL DEFAULT 0,
   price_gems INT UNSIGNED NOT NULL DEFAULT 0,
   tone VARCHAR(30) NOT NULL DEFAULT 'green',
+  stat_attack INT NOT NULL DEFAULT 0,
+  stat_defense INT NOT NULL DEFAULT 0,
+  power_effect VARCHAR(120) NOT NULL DEFAULT '',
+  stackable TINYINT(1) NOT NULL DEFAULT 0,
+  visual_type ENUM('css_slime', 'image') NOT NULL DEFAULT 'css_slime',
+  image_path VARCHAR(255) NULL,
+  animation_style VARCHAR(40) NOT NULL DEFAULT 'float',
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -45,7 +52,9 @@ CREATE TABLE IF NOT EXISTS player_inventory (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   item_id INT UNSIGNED NOT NULL,
+  quantity INT UNSIGNED NOT NULL DEFAULT 1,
   equipped TINYINT(1) NOT NULL DEFAULT 0,
+  equipped_slot VARCHAR(30) NULL,
   acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY unique_player_item (user_id, item_id),
   CONSTRAINT fk_inventory_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -80,12 +89,16 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO shop_items
-  (slug, name, item_type, description, price_coins, price_gems, tone)
+  (slug, name, item_type, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style)
 VALUES
-  ('nebula-green', 'Nebula Green', 'skin', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green'),
-  ('meteor-pink', 'Meteor Pink', 'skin', 'Bright pink slime skin for comet races.', 120, 0, 'pink'),
-  ('solar-gold', 'Solar Gold', 'skin', 'Golden slime skin for high-score climbers.', 180, 0, 'gold'),
-  ('void-cyan', 'Void Cyan', 'skin', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan');
+  ('nebula-green', 'Nebula Green', 'skin', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float'),
+  ('meteor-pink', 'Meteor Pink', 'skin', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float'),
+  ('solar-gold', 'Solar Gold', 'skin', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float'),
+  ('void-cyan', 'Void Cyan', 'skin', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float'),
+  ('comet-slinger', 'Comet Slinger', 'offense', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 'Unlocks ranged slime shots.', 0, 'css_slime', NULL, 'pulse'),
+  ('star-guard-shell', 'Star Guard Shell', 'defense', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 'Reduces incoming damage.', 0, 'css_slime', NULL, 'float'),
+  ('gravity-boots', 'Gravity Boots', 'tool', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 'Improves parkour control.', 0, 'css_slime', NULL, 'bounce'),
+  ('mint-burst-potion', 'Mint Burst Potion', 'potion', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 0, 0, 'Consumable speed boost.', 1, 'css_slime', NULL, 'pulse');
 
 INSERT IGNORE INTO achievements
   (slug, name, description, reward_coins)

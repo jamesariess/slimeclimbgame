@@ -81,23 +81,41 @@ function migrate(PDO $pdo): void
             price_coins INT UNSIGNED NOT NULL DEFAULT 0,
             price_gems INT UNSIGNED NOT NULL DEFAULT 0,
             tone VARCHAR(30) NOT NULL DEFAULT "green",
+            stat_attack INT NOT NULL DEFAULT 0,
+            stat_defense INT NOT NULL DEFAULT 0,
+            power_effect VARCHAR(120) NOT NULL DEFAULT "",
+            stackable TINYINT(1) NOT NULL DEFAULT 0,
+            visual_type ENUM("css_slime", "image") NOT NULL DEFAULT "css_slime",
+            image_path VARCHAR(255) NULL,
+            animation_style VARCHAR(40) NOT NULL DEFAULT "float",
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
     );
+    ensure_column($pdo, 'shop_items', 'visual_type', 'ALTER TABLE shop_items ADD visual_type ENUM("css_slime", "image") NOT NULL DEFAULT "css_slime" AFTER tone');
+    ensure_column($pdo, 'shop_items', 'stat_attack', 'ALTER TABLE shop_items ADD stat_attack INT NOT NULL DEFAULT 0 AFTER tone');
+    ensure_column($pdo, 'shop_items', 'stat_defense', 'ALTER TABLE shop_items ADD stat_defense INT NOT NULL DEFAULT 0 AFTER stat_attack');
+    ensure_column($pdo, 'shop_items', 'power_effect', 'ALTER TABLE shop_items ADD power_effect VARCHAR(120) NOT NULL DEFAULT "" AFTER stat_defense');
+    ensure_column($pdo, 'shop_items', 'stackable', 'ALTER TABLE shop_items ADD stackable TINYINT(1) NOT NULL DEFAULT 0 AFTER power_effect');
+    ensure_column($pdo, 'shop_items', 'image_path', 'ALTER TABLE shop_items ADD image_path VARCHAR(255) NULL AFTER visual_type');
+    ensure_column($pdo, 'shop_items', 'animation_style', 'ALTER TABLE shop_items ADD animation_style VARCHAR(40) NOT NULL DEFAULT "float" AFTER image_path');
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS player_inventory (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             user_id INT UNSIGNED NOT NULL,
             item_id INT UNSIGNED NOT NULL,
+            quantity INT UNSIGNED NOT NULL DEFAULT 1,
             equipped TINYINT(1) NOT NULL DEFAULT 0,
+            equipped_slot VARCHAR(30) NULL,
             acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY unique_player_item (user_id, item_id),
             CONSTRAINT fk_inventory_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             CONSTRAINT fk_inventory_item FOREIGN KEY (item_id) REFERENCES shop_items(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
     );
+    ensure_column($pdo, 'player_inventory', 'quantity', 'ALTER TABLE player_inventory ADD quantity INT UNSIGNED NOT NULL DEFAULT 1 AFTER item_id');
+    ensure_column($pdo, 'player_inventory', 'equipped_slot', 'ALTER TABLE player_inventory ADD equipped_slot VARCHAR(30) NULL AFTER equipped');
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS achievements (
@@ -138,15 +156,19 @@ function migrate(PDO $pdo): void
 function seed_game_content(PDO $pdo): void
 {
     $items = [
-        ['nebula-green', 'Nebula Green', 'skin', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green'],
-        ['meteor-pink', 'Meteor Pink', 'skin', 'Bright pink slime skin for comet races.', 120, 0, 'pink'],
-        ['solar-gold', 'Solar Gold', 'skin', 'Golden slime skin for high-score climbers.', 180, 0, 'gold'],
-        ['void-cyan', 'Void Cyan', 'skin', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan'],
+        ['nebula-green', 'Nebula Green', 'skin', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
+        ['meteor-pink', 'Meteor Pink', 'skin', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
+        ['solar-gold', 'Solar Gold', 'skin', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
+        ['void-cyan', 'Void Cyan', 'skin', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
+        ['comet-slinger', 'Comet Slinger', 'offense', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 'Unlocks ranged slime shots.', 0, 'css_slime', null, 'pulse'],
+        ['star-guard-shell', 'Star Guard Shell', 'defense', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 'Reduces incoming damage.', 0, 'css_slime', null, 'float'],
+        ['gravity-boots', 'Gravity Boots', 'tool', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 'Improves parkour control.', 0, 'css_slime', null, 'bounce'],
+        ['mint-burst-potion', 'Mint Burst Potion', 'potion', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 0, 0, 'Consumable speed boost.', 1, 'css_slime', null, 'pulse'],
     ];
     $itemStmt = $pdo->prepare(
         'INSERT IGNORE INTO shop_items
-            (slug, name, item_type, description, price_coins, price_gems, tone)
-         VALUES (?, ?, ?, ?, ?, ?, ?)'
+            (slug, name, item_type, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     foreach ($items as $item) {
         $itemStmt->execute($item);
@@ -417,7 +439,9 @@ function ensure_starter_inventory(PDO $pdo, int $userId): void
 function get_shop_items(): array
 {
     $stmt = db()->query(
-        'SELECT id, slug, name, item_type, description, price_coins, price_gems, tone
+        'SELECT id, slug, name, item_type, description, price_coins, price_gems, tone,
+                stat_attack, stat_defense, power_effect, stackable,
+                visual_type, image_path, animation_style
          FROM shop_items
          WHERE is_active = 1
          ORDER BY price_coins, id'
@@ -430,7 +454,10 @@ function get_player_inventory(int $userId): array
     $pdo = db();
     ensure_starter_inventory($pdo, $userId);
     $stmt = $pdo->prepare(
-        'SELECT si.id, si.slug, si.name, si.item_type, si.description, si.tone, pi.equipped, pi.acquired_at
+        'SELECT si.id, si.slug, si.name, si.item_type, si.description, si.tone,
+                si.stat_attack, si.stat_defense, si.power_effect, si.stackable,
+                si.visual_type, si.image_path, si.animation_style,
+                pi.quantity, pi.equipped, pi.equipped_slot, pi.acquired_at
          FROM player_inventory pi
          INNER JOIN shop_items si ON si.id = pi.item_id
          WHERE pi.user_id = :user_id
@@ -438,6 +465,145 @@ function get_player_inventory(int $userId): array
     );
     $stmt->execute([':user_id' => $userId]);
     return $stmt->fetchAll();
+}
+
+function get_inventory_item(int $userId, int $itemId): ?array
+{
+    $stmt = db()->prepare(
+        'SELECT si.*, pi.quantity, pi.equipped, pi.equipped_slot
+         FROM player_inventory pi
+         INNER JOIN shop_items si ON si.id = pi.item_id
+         WHERE pi.user_id = :user_id AND pi.item_id = :item_id
+         LIMIT 1'
+    );
+    $stmt->execute([
+        ':user_id' => $userId,
+        ':item_id' => $itemId,
+    ]);
+    $item = $stmt->fetch();
+    return $item ?: null;
+}
+
+function buy_shop_item(int $userId, int $itemId): void
+{
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $itemStmt = $pdo->prepare('SELECT * FROM shop_items WHERE id = :id AND is_active = 1 FOR UPDATE');
+        $itemStmt->execute([':id' => $itemId]);
+        $item = $itemStmt->fetch();
+        if (!$item) {
+            throw new RuntimeException('Shop item not found.');
+        }
+
+        $saveStmt = $pdo->prepare('SELECT coins, gems FROM player_saves WHERE user_id = :user_id FOR UPDATE');
+        $saveStmt->execute([':user_id' => $userId]);
+        $save = $saveStmt->fetch();
+        if (!$save) {
+            create_default_save($pdo, $userId);
+            $saveStmt->execute([':user_id' => $userId]);
+            $save = $saveStmt->fetch();
+        }
+
+        if ((int) $save['coins'] < (int) $item['price_coins'] || (int) $save['gems'] < (int) $item['price_gems']) {
+            throw new RuntimeException('Not enough coins or gems.');
+        }
+
+        $owned = get_inventory_item($userId, $itemId);
+        if ($owned && (int) $item['stackable'] !== 1) {
+            throw new RuntimeException('You already own this item.');
+        }
+
+        $pdo->prepare(
+            'UPDATE player_saves
+             SET coins = coins - :coins, gems = gems - :gems
+             WHERE user_id = :user_id'
+        )->execute([
+            ':coins' => (int) $item['price_coins'],
+            ':gems' => (int) $item['price_gems'],
+            ':user_id' => $userId,
+        ]);
+
+        $pdo->prepare(
+            'INSERT INTO player_inventory (user_id, item_id, quantity, equipped, equipped_slot)
+             VALUES (:user_id, :item_id, 1, 0, NULL)
+             ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)'
+        )->execute([
+            ':user_id' => $userId,
+            ':item_id' => $itemId,
+        ]);
+
+        $pdo->commit();
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $error;
+    }
+}
+
+function equipment_slot_for_type(string $itemType): ?string
+{
+    return match ($itemType) {
+        'skin' => 'skin',
+        'offense' => 'offense',
+        'defense' => 'defense',
+        'tool' => 'tool',
+        default => null,
+    };
+}
+
+function equip_inventory_item(int $userId, int $itemId): void
+{
+    $item = get_inventory_item($userId, $itemId);
+    if (!$item) {
+        throw new RuntimeException('You do not own this item.');
+    }
+    $slot = equipment_slot_for_type((string) $item['item_type']);
+    if (!$slot) {
+        throw new RuntimeException('This item cannot be equipped.');
+    }
+
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare(
+            'UPDATE player_inventory pi
+             INNER JOIN shop_items si ON si.id = pi.item_id
+             SET pi.equipped = 0, pi.equipped_slot = NULL
+             WHERE pi.user_id = :user_id AND si.item_type = :item_type'
+        )->execute([
+            ':user_id' => $userId,
+            ':item_type' => $item['item_type'],
+        ]);
+
+        $pdo->prepare(
+            'UPDATE player_inventory
+             SET equipped = 1, equipped_slot = :slot
+             WHERE user_id = :user_id AND item_id = :item_id'
+        )->execute([
+            ':slot' => $slot,
+            ':user_id' => $userId,
+            ':item_id' => $itemId,
+        ]);
+        $pdo->commit();
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $error;
+    }
+}
+
+function equipped_loadout(int $userId): array
+{
+    $loadout = ['skin' => null, 'offense' => null, 'defense' => null, 'tool' => null];
+    foreach (get_player_inventory($userId) as $item) {
+        if ((int) $item['equipped'] === 1 && $item['equipped_slot']) {
+            $loadout[$item['equipped_slot']] = $item;
+        }
+    }
+    return $loadout;
 }
 
 function get_achievements(int $userId): array

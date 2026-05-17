@@ -16,11 +16,31 @@ if (!preg_match('/^[a-z0-9-]{3,60}$/', $slug) || $name === '') {
 
 try {
     if ($type === 'shop_item') {
+        $imagePath = trim((string) ($_POST['image_path'] ?? ''));
+        $uploadedPath = handle_slime_image_upload($slug);
+        if ($uploadedPath !== '') {
+            $imagePath = $uploadedPath;
+        }
+        if ($imagePath !== '' && !preg_match('#^assets/images/shop-slimes/[a-zA-Z0-9._/-]+$#', $imagePath)) {
+            throw new RuntimeException('Image path must be inside assets/images/shop-slimes/.');
+        }
+        $visualType = (string) ($_POST['visual_type'] ?? 'css_slime');
+        if (!in_array($visualType, ['css_slime', 'image'], true)) {
+            $visualType = 'css_slime';
+        }
+        if ($visualType === 'image' && $imagePath === '') {
+            throw new RuntimeException('Choose an image or use generated animated slime.');
+        }
+        $animationStyle = (string) ($_POST['animation_style'] ?? 'float');
+        if (!in_array($animationStyle, ['float', 'bounce', 'pulse'], true)) {
+            $animationStyle = 'float';
+        }
+
         $stmt = db()->prepare(
             'INSERT INTO shop_items
-                (slug, name, item_type, description, price_coins, price_gems, tone)
+                (slug, name, item_type, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style)
              VALUES
-                (:slug, :name, :item_type, :description, :price_coins, :price_gems, :tone)
+                (:slug, :name, :item_type, :description, :price_coins, :price_gems, :tone, :stat_attack, :stat_defense, :power_effect, :stackable, :visual_type, :image_path, :animation_style)
              ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
                 item_type = VALUES(item_type),
@@ -28,6 +48,13 @@ try {
                 price_coins = VALUES(price_coins),
                 price_gems = VALUES(price_gems),
                 tone = VALUES(tone),
+                stat_attack = VALUES(stat_attack),
+                stat_defense = VALUES(stat_defense),
+                power_effect = VALUES(power_effect),
+                stackable = VALUES(stackable),
+                visual_type = VALUES(visual_type),
+                image_path = VALUES(image_path),
+                animation_style = VALUES(animation_style),
                 is_active = 1'
         );
         $stmt->execute([
@@ -38,6 +65,13 @@ try {
             ':price_coins' => max(0, (int) ($_POST['price_coins'] ?? 0)),
             ':price_gems' => max(0, (int) ($_POST['price_gems'] ?? 0)),
             ':tone' => substr((string) ($_POST['tone'] ?? 'green'), 0, 30),
+            ':stat_attack' => max(0, (int) ($_POST['stat_attack'] ?? 0)),
+            ':stat_defense' => max(0, (int) ($_POST['stat_defense'] ?? 0)),
+            ':power_effect' => substr((string) ($_POST['power_effect'] ?? ''), 0, 120),
+            ':stackable' => !empty($_POST['stackable']) ? 1 : 0,
+            ':visual_type' => $visualType,
+            ':image_path' => $imagePath !== '' ? $imagePath : null,
+            ':animation_style' => $animationStyle,
         ]);
         $_SESSION['flash_success'] = 'Shop item saved.';
     } elseif ($type === 'achievement') {
@@ -66,3 +100,41 @@ try {
 
 header('Location: ../admin_content.php');
 exit;
+
+function handle_slime_image_upload(string $slug): string
+{
+    if (empty($_FILES['slime_image']) || ($_FILES['slime_image']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return '';
+    }
+    if ($_FILES['slime_image']['error'] !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('Image upload failed.');
+    }
+    if ($_FILES['slime_image']['size'] > 2 * 1024 * 1024) {
+        throw new RuntimeException('Image must be 2MB or smaller.');
+    }
+
+    $tmp = $_FILES['slime_image']['tmp_name'];
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file($tmp);
+    $extensions = [
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+    ];
+    if (!isset($extensions[$mime])) {
+        throw new RuntimeException('Use PNG, JPG, WEBP, or GIF images only.');
+    }
+
+    $dir = __DIR__ . '/../assets/images/shop-slimes';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0775, true);
+    }
+    $filename = $slug . '-' . bin2hex(random_bytes(4)) . '.' . $extensions[$mime];
+    $target = $dir . '/' . $filename;
+    if (!move_uploaded_file($tmp, $target)) {
+        throw new RuntimeException('Could not save uploaded image.');
+    }
+
+    return 'assets/images/shop-slimes/' . $filename;
+}

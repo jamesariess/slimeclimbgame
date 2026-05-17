@@ -2,23 +2,35 @@
 require __DIR__ . '/api/config.php';
 $user = require_login();
 $achievements = get_achievements((int) $user['id']);
+$earnedCount = count(array_filter($achievements, static fn (array $achievement): bool => (int) $achievement['earned'] === 1));
 $pageTitle = 'Achievements - Slime Climb Galaxy';
 $bodyClass = 'panel-page';
 require __DIR__ . '/partials/head.php';
 require __DIR__ . '/partials/player_nav.php';
 ?>
-<main class="content-wrap">
-  <h1>Achievements</h1>
-  <div class="achievement-grid">
+<main class="game-subpage achievements-screen">
+  <section class="subpage-hero achievements-hero">
+    <div>
+      <p class="kicker">Trophy constellation</p>
+      <h1>Achievements</h1>
+      <p class="muted">Track galaxy milestones, unlock rewards, and complete your slime legend.</p>
+    </div>
+    <div class="vault-count">
+      <span>Unlocked</span>
+      <strong><?php echo $earnedCount; ?>/<?php echo count($achievements); ?></strong>
+    </div>
+  </section>
+  <section class="achievement-constellation">
     <?php foreach ($achievements as $achievement): ?>
       <?php $earned = (int) $achievement['earned'] === 1; ?>
-      <article class="achievement-card <?php echo $earned ? 'earned' : ''; ?>">
-        <strong><?php echo $earned ? 'Unlocked' : 'Locked'; ?></strong>
-        <span><?php echo htmlspecialchars($achievement['name']); ?></span>
+      <article class="trophy-card <?php echo $earned ? 'earned' : 'locked'; ?>">
+        <div class="trophy-orb"><?php echo $earned ? '★' : '◇'; ?></div>
+        <span class="card-tag"><?php echo $earned ? 'Unlocked' : 'Locked'; ?></span>
+        <h2><?php echo htmlspecialchars($achievement['name']); ?></h2>
         <p><?php echo htmlspecialchars($achievement['description']); ?></p>
         <small><?php echo (int) $achievement['reward_coins']; ?> coin reward</small>
       </article>
     <?php endforeach; ?>
-  </div>
+  </section>
 </main>
 <?php require __DIR__ . '/partials/foot.php'; ?>

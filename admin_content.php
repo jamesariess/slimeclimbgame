@@ -22,7 +22,7 @@ require __DIR__ . '/partials/player_nav.php';
 
   <section class="simple-panel">
     <h2>Add Shop Item</h2>
-    <form class="form-stack compact-form" action="actions/admin_content.php" method="post">
+    <form class="form-stack compact-form" action="actions/admin_content.php" method="post" enctype="multipart/form-data">
       <?php echo csrf_field(); ?>
       <input type="hidden" name="content_type" value="shop_item">
       <label><span>Name</span><input name="name" required></label>
@@ -32,6 +32,27 @@ require __DIR__ . '/partials/player_nav.php';
       <label><span>Coin price</span><input name="price_coins" type="number" min="0" value="0"></label>
       <label><span>Gem price</span><input name="price_gems" type="number" min="0" value="0"></label>
       <label><span>Color tone</span><input name="tone" value="green" required></label>
+      <label><span>Attack stat</span><input name="stat_attack" type="number" value="0"></label>
+      <label><span>Defense stat</span><input name="stat_defense" type="number" value="0"></label>
+      <label><span>Power effect</span><input name="power_effect" placeholder="Unlocks ranged slime shots."></label>
+      <label class="toggle-row premium-toggle"><span>Stackable item</span><input name="stackable" type="checkbox" value="1"></label>
+      <label>
+        <span>Visual type</span>
+        <select name="visual_type">
+          <option value="css_slime">Generated animated slime</option>
+          <option value="image">Uploaded image slime</option>
+        </select>
+      </label>
+      <label><span>Upload slime image</span><input name="slime_image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+      <label><span>Or image path</span><input name="image_path" placeholder="assets/images/shop-slimes/my-slime.png"></label>
+      <label>
+        <span>Animation</span>
+        <select name="animation_style">
+          <option value="float">Float</option>
+          <option value="bounce">Bounce</option>
+          <option value="pulse">Pulse glow</option>
+        </select>
+      </label>
       <button class="primary" type="submit">Save Shop Item</button>
     </form>
   </section>
@@ -53,7 +74,7 @@ require __DIR__ . '/partials/player_nav.php';
     <h2>Current Shop Items</h2>
     <div class="admin-list">
       <?php foreach ($items as $item): ?>
-        <div><strong><?php echo htmlspecialchars($item['name']); ?></strong><span><?php echo htmlspecialchars($item['slug']); ?> - <?php echo (int) $item['price_coins']; ?> coins</span></div>
+        <div><strong><?php echo htmlspecialchars($item['name']); ?></strong><span><?php echo htmlspecialchars($item['slug']); ?> - <?php echo (int) $item['price_coins']; ?> coins - <?php echo htmlspecialchars($item['visual_type']); ?></span></div>
       <?php endforeach; ?>
     </div>
   </section>
