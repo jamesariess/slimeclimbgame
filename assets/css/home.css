@@ -61,6 +61,33 @@
     rgba(7, 13, 42, .72);
 }
 
+.profile-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.profile-topline {
+  grid-template-columns: minmax(64px, 96px) minmax(0, 1fr);
+}
+
+.profile-topline > div:last-child {
+  min-width: 0;
+}
+
+.profile-topline h2 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  line-height: .95;
+}
+
+.avatar-orb {
+  width: clamp(68px, 7vw, 96px);
+  height: clamp(68px, 7vw, 96px);
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
 .cinematic-stage {
   border: 1px solid rgba(125,238,255,.18);
   overflow: hidden;
@@ -73,15 +100,19 @@
 
 .premium-rank-badge {
   display: inline-flex;
+  max-width: 100%;
   width: fit-content;
   padding: 7px 11px;
   border: 1px solid rgba(255,209,102,.32);
   border-radius: 999px;
   color: var(--gold);
   background: rgba(255,209,102,.08);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.avatar-orb {
+.profile-panel .avatar-orb {
   animation: avatarGlow 2.8s ease-in-out infinite;
 }
 
@@ -95,6 +126,19 @@
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 4px 9px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cute-wallet strong,
+.cute-wallet span:not(.wallet-icon) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cute-wallet strong {
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
 }
 
 .wallet-icon {
@@ -695,6 +739,41 @@
 }
 
 @media (max-width: 720px) {
+  .profile-panel {
+    padding: 18px;
+  }
+
+  .profile-topline {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .profile-topline h2 {
+    font-size: clamp(1.9rem, 9vw, 2.55rem);
+  }
+
+  .level-medallion {
+    width: 112px;
+    height: 112px;
+  }
+
+  .wallet-grid.cute-wallet {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cute-wallet div {
+    padding: 10px;
+  }
+
+  .wallet-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .mini-mission {
+    padding-left: 58px;
+  }
+
   .character-stage.cinematic-stage {
     display: flex;
     flex-direction: column;
