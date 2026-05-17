@@ -28,7 +28,17 @@ require __DIR__ . '/partials/player_nav.php';
       <label><span>Name</span><input name="name" required></label>
       <label><span>Slug</span><input name="slug" placeholder="meteor-pink" required></label>
       <label><span>Description</span><input name="description" required></label>
-      <label><span>Type</span><input name="item_type" value="skin" required></label>
+      <label>
+        <span>Type</span>
+        <select name="item_type" required>
+          <option value="skin">Skin</option>
+          <option value="offense">Offense weapon</option>
+          <option value="defense">Defense gear</option>
+          <option value="tool">Tool / shoes</option>
+          <option value="wings">Wings</option>
+          <option value="potion">Potion</option>
+        </select>
+      </label>
       <label>
         <span>Category</span>
         <select name="category">
@@ -37,7 +47,6 @@ require __DIR__ . '/partials/player_nav.php';
           <option value="trails">Trails</option>
           <option value="bundles">Bundles</option>
           <option value="limited">Limited</option>
-          <option value="costumes">Costumes</option>
           <option value="seasonal">Seasonal</option>
         </select>
       </label>
@@ -58,6 +67,7 @@ require __DIR__ . '/partials/player_nav.php';
       <label><span>Color tone</span><input name="tone" value="green" required></label>
       <label><span>Attack stat</span><input name="stat_attack" type="number" value="0"></label>
       <label><span>Defense stat</span><input name="stat_defense" type="number" value="0"></label>
+      <label><span>Jump stat</span><input name="stat_jump" type="number" value="0"></label>
       <label><span>Power effect</span><input name="power_effect" placeholder="Unlocks ranged slime shots."></label>
       <label class="toggle-row premium-toggle"><span>Stackable item</span><input name="stackable" type="checkbox" value="1"></label>
       <label>
@@ -67,8 +77,8 @@ require __DIR__ . '/partials/player_nav.php';
           <option value="image">Uploaded image slime</option>
         </select>
       </label>
-      <label><span>Upload slime image</span><input name="slime_image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
-      <label><span>Or image path</span><input name="image_path" placeholder="assets/images/shop-slimes/my-slime.png"></label>
+      <label><span>Upload item image</span><input name="slime_image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+      <label><span>Or image path</span><input name="image_path" placeholder="assets/images/items/my-gear.svg"></label>
       <label>
         <span>Animation</span>
         <select name="animation_style">

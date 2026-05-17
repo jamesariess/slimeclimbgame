@@ -1479,6 +1479,10 @@ input:focus {
   object-fit: contain;
 }
 
+.shop-screen .slime-asset {
+  width: min(220px, 78%);
+}
+
 .slime-asset.bounce {
   animation-name: assetBounce;
   animation-duration: 1.8s;
@@ -1507,6 +1511,177 @@ input:focus {
   justify-self: start;
   width: 82px;
   margin-bottom: 6px;
+}
+
+.equipment-art {
+  position: relative;
+  align-self: center;
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  width: min(210px, 78%);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 0 28px rgba(69,239,255,.38)) drop-shadow(0 18px 24px rgba(0,0,0,.34));
+  animation: assetFloat 2.8s ease-in-out infinite;
+}
+
+.equipment-art.bounce { animation-name: assetBounce; animation-duration: 1.8s; }
+.equipment-art.pulse { animation-name: assetPulse; animation-duration: 2.2s; }
+
+.equipment-art::before {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(69,239,255,.18), transparent 68%);
+  filter: blur(10px);
+}
+
+.equipment-art span,
+.equipment-art span::before,
+.equipment-art span::after {
+  position: absolute;
+  content: "";
+  display: block;
+}
+
+.equipment-art.offense span {
+  width: 34px;
+  height: 150px;
+  border-radius: 18px 18px 6px 6px;
+  background: linear-gradient(90deg, #dffcff, #7ee8ff 45%, #2f78ff);
+  transform: rotate(42deg);
+  box-shadow: inset -8px 0 rgba(0,0,0,.15), 0 0 24px rgba(69,239,255,.48);
+}
+
+.equipment-art.offense span::before {
+  left: -24px;
+  top: 105px;
+  width: 82px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), #ff9d6c);
+}
+
+.equipment-art.offense span::after {
+  left: 3px;
+  top: 126px;
+  width: 28px;
+  height: 62px;
+  border-radius: 8px 8px 18px 18px;
+  background: linear-gradient(180deg, #1b244f, #0b1028);
+}
+
+.equipment-art.defense span {
+  width: 150px;
+  height: 170px;
+  border-radius: 48% 48% 56% 56% / 34% 34% 66% 66%;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255,255,255,.38), transparent 18%),
+    linear-gradient(145deg, var(--gold), #ff9d6c 48%, #7c3fce);
+  clip-path: polygon(50% 0, 92% 18%, 82% 76%, 50% 100%, 18% 76%, 8% 18%);
+  box-shadow: inset -16px -20px rgba(0,0,0,.18), 0 0 34px rgba(255,209,102,.38);
+}
+
+.equipment-art.defense span::after {
+  left: 48px;
+  top: 40px;
+  width: 54px;
+  height: 78px;
+  border-radius: 50%;
+  border: 5px solid rgba(255,255,255,.55);
+}
+
+.equipment-art.tool span {
+  width: 150px;
+  height: 76px;
+  border-radius: 32px 42px 24px 30px;
+  background: linear-gradient(145deg, var(--lime), var(--cyan));
+  transform: rotate(-12deg);
+  box-shadow: inset -14px -14px rgba(0,0,0,.18), 0 0 28px rgba(103,255,147,.4);
+}
+
+.equipment-art.tool span::before {
+  left: 12px;
+  bottom: -24px;
+  width: 112px;
+  height: 28px;
+  border-radius: 12px 12px 24px 24px;
+  background: linear-gradient(90deg, #16214f, #0a102b);
+}
+
+.equipment-art.tool span::after {
+  right: 20px;
+  top: -26px;
+  width: 46px;
+  height: 58px;
+  border-radius: 20px 20px 12px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(69,239,255,.38));
+}
+
+.equipment-art.potion span {
+  width: 92px;
+  height: 142px;
+  border-radius: 28px 28px 36px 36px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.45), transparent 28%),
+    linear-gradient(180deg, rgba(103,255,147,.22) 0 34%, var(--lime) 35% 100%);
+  border: 4px solid rgba(255,255,255,.5);
+  box-shadow: inset -14px -18px rgba(0,0,0,.16), 0 0 30px rgba(103,255,147,.42);
+}
+
+.equipment-art.potion span::before {
+  left: 22px;
+  top: -34px;
+  width: 48px;
+  height: 38px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(180deg, var(--gold), #ff9d6c);
+}
+
+.inventory-equipment {
+  justify-self: start;
+  width: 92px;
+  margin-bottom: 6px;
+}
+
+.slime-wings-attachment,
+.slime-shield-attachment,
+.slime-weapon-attachment {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.slime-wings-attachment {
+  width: min(430px, 74vw);
+  height: 190px;
+  top: 34%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: url("../images/items/nebula-wings.svg") center / contain no-repeat;
+  filter: drop-shadow(0 0 26px rgba(69,239,255,.45));
+  animation: ringFloat 3.2s ease-in-out infinite;
+}
+
+.slime-shield-attachment {
+  width: 150px;
+  height: 150px;
+  right: 21%;
+  top: 44%;
+  background: url("../images/items/star-guard-shell.svg") center / contain no-repeat;
+  filter: drop-shadow(0 0 20px rgba(255,209,102,.5));
+  animation: assetPulse 2.6s ease-in-out infinite;
+}
+
+.slime-weapon-attachment {
+  width: 130px;
+  height: 130px;
+  left: 20%;
+  top: 49%;
+  background: url("../images/items/moon-fang-knife.svg") center / contain no-repeat;
+  filter: drop-shadow(0 0 18px rgba(69,239,255,.45));
+  transform: rotate(-24deg);
 }
 
 @keyframes assetFloat {
@@ -2000,7 +2175,7 @@ input:focus {
   right: 10px;
   bottom: 10px;
   display: none;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
 

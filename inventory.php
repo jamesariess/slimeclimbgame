@@ -3,6 +3,8 @@ require __DIR__ . '/api/config.php';
 $user = require_login();
 $inventory = get_player_inventory((int) $user['id']);
 $loadout = equipped_loadout((int) $user['id']);
+$effects = active_effects((int) $user['id']);
+$stats = total_loadout_stats($loadout, $effects);
 $featured = $loadout['skin'] ?? ($inventory[0] ?? null);
 $message = $_SESSION['flash_success'] ?? '';
 $error = $_SESSION['flash_error'] ?? '';
@@ -42,6 +44,11 @@ require __DIR__ . '/partials/player_nav.php';
         <span>Offense: <?php echo htmlspecialchars($loadout['offense']['name'] ?? 'Empty'); ?></span>
         <span>Defense: <?php echo htmlspecialchars($loadout['defense']['name'] ?? 'Empty'); ?></span>
         <span>Tool: <?php echo htmlspecialchars($loadout['tool']['name'] ?? 'Empty'); ?></span>
+        <span>Wings: <?php echo htmlspecialchars($loadout['wings']['name'] ?? 'Empty'); ?></span>
+        <span>Total ATK: <?php echo (int) $stats['attack']; ?> / DEF: <?php echo (int) $stats['defense']; ?> / JMP: +<?php echo (int) $stats['jump']; ?></span>
+        <?php foreach ($effects as $effect): ?>
+          <span>Effect: <?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?></span>
+        <?php endforeach; ?>
       </div>
     </div>
     <div class="inventory-grid">
@@ -50,6 +57,10 @@ require __DIR__ . '/partials/player_nav.php';
         <?php if ($item['visual_type'] === 'image' && !empty($item['image_path'])): ?>
           <div class="slime-asset inventory-asset <?php echo htmlspecialchars($item['animation_style']); ?>">
             <img src="<?php echo htmlspecialchars($item['image_path']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
+          </div>
+        <?php elseif ($item['item_type'] !== 'skin'): ?>
+          <div class="equipment-art inventory-equipment <?php echo htmlspecialchars($item['item_type']); ?> <?php echo htmlspecialchars($item['slug']); ?> <?php echo htmlspecialchars($item['animation_style']); ?>" aria-hidden="true">
+            <span></span>
           </div>
         <?php else: ?>
           <div class="mini-slime"></div>
@@ -62,6 +73,7 @@ require __DIR__ . '/partials/player_nav.php';
         <div class="item-stats">
           <?php if ((int) $item['stat_attack'] !== 0): ?><span>ATK +<?php echo (int) $item['stat_attack']; ?></span><?php endif; ?>
           <?php if ((int) $item['stat_defense'] !== 0): ?><span>DEF +<?php echo (int) $item['stat_defense']; ?></span><?php endif; ?>
+          <?php if ((int) $item['stat_jump'] !== 0): ?><span>JMP +<?php echo (int) $item['stat_jump']; ?></span><?php endif; ?>
           <?php if ($item['power_effect'] !== ''): ?><span><?php echo htmlspecialchars($item['power_effect']); ?></span><?php endif; ?>
           <?php if ((int) $item['quantity'] > 1): ?><span>Qty <?php echo (int) $item['quantity']; ?></span><?php endif; ?>
         </div>
@@ -74,7 +86,11 @@ require __DIR__ . '/partials/player_nav.php';
               <button class="small primary" type="submit" <?php echo (int) $item['equipped'] === 1 ? 'disabled' : ''; ?>>Equip</button>
             </form>
           <?php else: ?>
-            <span class="consumable-note">Consumable</span>
+            <form action="actions/use_potion.php" method="post">
+              <?php echo csrf_field(); ?>
+              <input type="hidden" name="item_id" value="<?php echo (int) $item['id']; ?>">
+              <button class="small primary" type="submit" <?php echo (int) $item['quantity'] < 1 ? 'disabled' : ''; ?>>Use</button>
+            </form>
           <?php endif; ?>
         </div>
       </article>

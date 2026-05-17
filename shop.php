@@ -13,7 +13,7 @@ $featuredItems = array_values(array_filter($items, static fn (array $item): bool
 $featuredItem = $featuredItems[0] ?? ($items[0] ?? null);
 $visibleItems = $activeCategory === 'featured'
     ? $items
-    : array_values(array_filter($items, static fn (array $item): bool => $item['category'] === $activeCategory || ($activeCategory === 'skins' && $item['item_type'] === 'skin') || ($activeCategory === 'boosts' && in_array($item['item_type'], ['offense', 'defense', 'tool', 'potion'], true))));
+    : array_values(array_filter($items, static fn (array $item): bool => $item['category'] === $activeCategory || ($activeCategory === 'skins' && $item['item_type'] === 'skin') || ($activeCategory === 'boosts' && in_array($item['item_type'], ['offense', 'defense', 'tool', 'wings', 'potion'], true))));
 $owned = [];
 foreach ($inventory as $ownedItem) {
     $owned[(int) $ownedItem['id']] = $ownedItem;
@@ -69,7 +69,6 @@ require __DIR__ . '/partials/player_nav.php';
         'trails' => 'Trails',
         'bundles' => 'Bundles',
         'limited' => 'Limited',
-        'custumes' => 'Costumes',
         'seasonal' => 'Seasonal',
     ] as $category => $label): ?>
       <a class="<?php echo $activeCategory === $category ? 'active' : ''; ?>" href="shop.php?category=<?php echo htmlspecialchars($category); ?>"><?php echo htmlspecialchars($label); ?></a>
@@ -90,8 +89,12 @@ require __DIR__ . '/partials/player_nav.php';
           <div class="slime-asset <?php echo htmlspecialchars($item['animation_style']); ?>">
             <img src="<?php echo htmlspecialchars($item['image_path']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
           </div>
+        <?php elseif ($item['item_type'] !== 'skin'): ?>
+          <div class="equipment-art <?php echo htmlspecialchars($item['item_type']); ?> <?php echo htmlspecialchars($item['slug']); ?> <?php echo htmlspecialchars($item['animation_style']); ?>" aria-hidden="true">
+            <span></span>
+          </div>
         <?php else: ?>
-          <div class="hero-slime shop-slime <?php echo htmlspecialchars($item['animation_style']); ?>" aria-hidden="true"></div>
+          <div class="hero-slime shop-slime <?php echo htmlspecialchars($item['tone']); ?> <?php echo htmlspecialchars($item['animation_style']); ?>" aria-hidden="true"></div>
         <?php endif; ?>
         <div class="item-copy">
           <div class="item-meta-row">
@@ -103,13 +106,14 @@ require __DIR__ . '/partials/player_nav.php';
           <div class="item-stats">
             <?php if ((int) $item['stat_attack'] !== 0): ?><span>ATK +<?php echo (int) $item['stat_attack']; ?></span><?php endif; ?>
             <?php if ((int) $item['stat_defense'] !== 0): ?><span>DEF +<?php echo (int) $item['stat_defense']; ?></span><?php endif; ?>
+            <?php if ((int) $item['stat_jump'] !== 0): ?><span>JMP +<?php echo (int) $item['stat_jump']; ?></span><?php endif; ?>
             <?php if ($item['power_effect'] !== ''): ?><span><?php echo htmlspecialchars($item['power_effect']); ?></span><?php endif; ?>
           </div>
         </div>
         <div class="item-footer">
           <div>
-            <strong><?php echo $isEquipped ? 'Equipped' : ($isOwned ? 'Owned' : '◎ ' . $coinPrice); ?></strong>
-            <span><?php echo $isOwned && (int) $item['stackable'] === 1 ? 'Qty ' . (int) $ownedItem['quantity'] : ((int) $item['price_gems'] > 0 ? '◇ ' . (int) $item['price_gems'] : htmlspecialchars($item['category'])); ?></span>
+            <strong><?php echo $isEquipped ? 'Equipped' : ($isOwned ? 'Owned' : 'C ' . $coinPrice); ?></strong>
+            <span><?php echo $isOwned && (int) $item['stackable'] === 1 ? 'Qty ' . (int) $ownedItem['quantity'] : ((int) $item['price_gems'] > 0 ? 'G ' . (int) $item['price_gems'] : htmlspecialchars($item['category'])); ?></span>
           </div>
           <form action="actions/buy_item.php" method="post">
             <?php echo csrf_field(); ?>

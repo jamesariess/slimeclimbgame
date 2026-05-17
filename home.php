@@ -3,6 +3,8 @@ require __DIR__ . '/api/config.php';
 $user = require_login();
 $save = load_player_save((int) $user['id']);
 $loadout = equipped_loadout((int) $user['id']);
+$effects = active_effects((int) $user['id']);
+$stats = total_loadout_stats($loadout, $effects);
 $equippedSkin = $loadout['skin'] ?? null;
 $pageTitle = 'Character Hub - Slime Climb Galaxy';
 $bodyClass = 'hub-page';
@@ -67,6 +69,9 @@ $earnedAchievements = count($save['achievements']);
         <span class="smile"></span>
       </div>
     <?php endif; ?>
+    <?php if (!empty($loadout['wings'])): ?><div class="slime-wings-attachment" aria-hidden="true"></div><?php endif; ?>
+    <?php if (!empty($loadout['defense'])): ?><div class="slime-shield-attachment" aria-hidden="true"></div><?php endif; ?>
+    <?php if (!empty($loadout['offense'])): ?><div class="slime-weapon-attachment" aria-hidden="true"></div><?php endif; ?>
     <div class="stage-caption">
       <p class="kicker">Active slime</p>
       <h1><?php echo htmlspecialchars($equippedSkin['name'] ?? 'Nebula Green'); ?></h1>
@@ -95,6 +100,14 @@ $earnedAchievements = count($save['achievements']);
       <strong><?php echo $earnedAchievements; ?> achievements</strong>
       <p>Next objective: reach Orion Peak.</p>
     </a>
+    <div class="activity-card status-card">
+      <span class="card-tag">Slime Status</span>
+      <strong>ATK <?php echo (int) $stats['attack']; ?> / DEF <?php echo (int) $stats['defense']; ?> / JMP +<?php echo (int) $stats['jump']; ?></strong>
+      <p>Offense: <?php echo htmlspecialchars($loadout['offense']['name'] ?? 'Empty'); ?></p>
+      <p>Defense: <?php echo htmlspecialchars($loadout['defense']['name'] ?? 'Empty'); ?></p>
+      <p>Wings: <?php echo htmlspecialchars($loadout['wings']['name'] ?? 'Empty'); ?></p>
+      <?php foreach ($effects as $effect): ?><small><?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?></small><?php endforeach; ?>
+    </div>
     <div class="rail-grid">
       <a class="activity-card compact-card" href="shop.php"><strong>Shop</strong><span>New skins</span></a>
       <a class="activity-card compact-card" href="inventory.php"><strong>Inventory</strong><span><?php echo $ownedSkins; ?> owned</span></a>

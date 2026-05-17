@@ -21,8 +21,8 @@ try {
         if ($uploadedPath !== '') {
             $imagePath = $uploadedPath;
         }
-        if ($imagePath !== '' && !preg_match('#^assets/images/shop-slimes/[a-zA-Z0-9._/-]+$#', $imagePath)) {
-            throw new RuntimeException('Image path must be inside assets/images/shop-slimes/.');
+        if ($imagePath !== '' && !preg_match('#^assets/images/(shop-slimes|items)/[a-zA-Z0-9._/-]+$#', $imagePath)) {
+            throw new RuntimeException('Image path must be inside assets/images/shop-slimes/ or assets/images/items/.');
         }
         $visualType = (string) ($_POST['visual_type'] ?? 'css_slime');
         if (!in_array($visualType, ['css_slime', 'image'], true)) {
@@ -48,9 +48,9 @@ try {
 
         $stmt = db()->prepare(
             'INSERT INTO shop_items
-                (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
+                (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, stat_jump, power_effect, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
              VALUES
-                (:slug, :name, :item_type, :category, :rarity, :description, :price_coins, :price_gems, :tone, :stat_attack, :stat_defense, :power_effect, :stackable, :visual_type, :image_path, :animation_style, :sale_percent, :limited_until)
+                (:slug, :name, :item_type, :category, :rarity, :description, :price_coins, :price_gems, :tone, :stat_attack, :stat_defense, :stat_jump, :power_effect, :stackable, :visual_type, :image_path, :animation_style, :sale_percent, :limited_until)
              ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
                 item_type = VALUES(item_type),
@@ -62,6 +62,7 @@ try {
                 tone = VALUES(tone),
                 stat_attack = VALUES(stat_attack),
                 stat_defense = VALUES(stat_defense),
+                stat_jump = VALUES(stat_jump),
                 power_effect = VALUES(power_effect),
                 stackable = VALUES(stackable),
                 visual_type = VALUES(visual_type),
@@ -74,7 +75,7 @@ try {
         $stmt->execute([
             ':slug' => $slug,
             ':name' => $name,
-            ':item_type' => substr((string) ($_POST['item_type'] ?? 'skin'), 0, 30),
+            ':item_type' => allowed_item_type((string) ($_POST['item_type'] ?? 'skin')),
             ':category' => $category,
             ':rarity' => $rarity,
             ':description' => substr($description, 0, 255),
@@ -83,6 +84,7 @@ try {
             ':tone' => substr((string) ($_POST['tone'] ?? 'green'), 0, 30),
             ':stat_attack' => max(0, (int) ($_POST['stat_attack'] ?? 0)),
             ':stat_defense' => max(0, (int) ($_POST['stat_defense'] ?? 0)),
+            ':stat_jump' => max(0, (int) ($_POST['stat_jump'] ?? 0)),
             ':power_effect' => substr((string) ($_POST['power_effect'] ?? ''), 0, 120),
             ':stackable' => !empty($_POST['stackable']) ? 1 : 0,
             ':visual_type' => $visualType,
@@ -118,6 +120,11 @@ try {
 
 header('Location: ../admin_content.php');
 exit;
+
+function allowed_item_type(string $itemType): string
+{
+    return in_array($itemType, ['skin', 'offense', 'defense', 'tool', 'wings', 'potion'], true) ? $itemType : 'skin';
+}
 
 function handle_slime_image_upload(string $slug): string
 {

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="wing" x1="20" x2="232" y1="56" y2="202">
+      <stop stop-color="#45efff"/>
+      <stop offset=".48" stop-color="#8a6bff"/>
+      <stop offset="1" stop-color="#ff5fc8"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="28" fill="#67ff93"/>
+  <path fill="url(#wing)" opacity=".92" d="M118 120C80 58 36 44 16 72c-20 29 18 86 96 104-20-23-25-42 6-56Z"/>
+  <path fill="url(#wing)" opacity=".92" d="M138 120c38-62 82-76 102-48 20 29-18 86-96 104 20-23 25-42-6-56Z"/>
+  <path fill="#fff" opacity=".35" d="M56 78c23 5 44 22 63 51-31-10-53-26-63-51ZM200 78c-23 5-44 22-63 51 31-10 53-26 63-51Z"/>
+</svg>

@@ -13,12 +13,19 @@ const save = {
   ...(window.SLIME_SAVE || {}),
 };
 const loadout = window.SLIME_LOADOUT || {};
+const activeEffects = window.SLIME_EFFECTS || [];
+const serverStats = window.SLIME_STATS || {};
 const equippedSkin = loadout.skin || {};
 const slimePalette = {
   green: "#67ff93",
   cyan: "#45efff",
   pink: "#ff5fc8",
   gold: "#ffd166",
+};
+const equipmentStats = {
+  attack: Number(serverStats.attack || 4),
+  defense: Number(serverStats.defense || 0),
+  jumpBoost: Number(serverStats.jump || 0),
 };
 let skinImage = null;
 if (equippedSkin.visual_type === "image" && equippedSkin.image_path) {
@@ -68,8 +75,20 @@ const player = {
   jumps: 0,
   gravitySign: 1,
   grounded: false,
+  hp: 100,
+  facing: 1,
+  invulnerableUntil: 0,
+  attackCooldownUntil: 0,
   checkpoint: { x: 80, y: 760, name: "Start" },
 };
+
+const enemies = [
+  { x: 860, y: 584, w: 46, h: 36, hp: 18, alive: true, patrol: 70, baseX: 860, dir: 1 },
+  { x: 1460, y: 584, w: 54, h: 40, hp: 26, alive: true, patrol: 90, baseX: 1460, dir: -1 },
+  { x: 2170, y: 314, w: 58, h: 42, hp: 34, alive: true, patrol: 80, baseX: 2170, dir: 1 },
+];
+
+const attacks = [];
 
 if (save.current_checkpoint === "Lunar Gate") player.checkpoint = { x: 1040, y: 450, name: "Lunar Gate" };
 if (save.current_checkpoint === "Orion Peak") player.checkpoint = { x: 2040, y: 300, name: "Orion Peak" };
@@ -109,10 +128,26 @@ let jumpWasPressed = false;
 
 function jump() {
   if (player.grounded || player.jumps < 2) {
-    player.vy = -15 * player.gravitySign;
+    player.vy = -(15 + equipmentStats.jumpBoost) * player.gravitySign;
     player.grounded = false;
     player.jumps += 1;
   }
+}
+
+function attack() {
+  const now = performance.now();
+  if (now < player.attackCooldownUntil) return;
+  player.attackCooldownUntil = now + 420;
+  const hasKnife = loadout.offense?.slug === "moon-fang-knife";
+  attacks.push({
+    x: player.x + player.w / 2 + player.facing * 26,
+    y: player.y + player.h / 2,
+    vx: hasKnife ? player.facing * 0 : player.facing * 13,
+    life: hasKnife ? 10 : 52,
+    r: hasKnife ? 46 : 12,
+    damage: Math.max(4, equipmentStats.attack),
+    melee: hasKnife,
+  });
 }
 
 function flipGravity() {
@@ -163,11 +198,15 @@ function update() {
   const left = pressed("arrowleft") || pressed("a") || pressed("left");
   const right = pressed("arrowright") || pressed("d") || pressed("right");
   const wantsJump = pressed("arrowup") || pressed("w") || pressed(" ") || pressed("jump");
+  const wantsAttack = pressed("f") || pressed("attack");
 
   if (wantsJump && !jumpWasPressed) jump();
   jumpWasPressed = wantsJump;
+  if (wantsAttack) attack();
 
   player.vx += (right - left) * 0.8;
+  if (right) player.facing = 1;
+  if (left) player.facing = -1;
   player.vx *= 0.84;
   player.vx = Math.max(-8, Math.min(8, player.vx));
   player.vy += world.gravity * player.gravitySign;
@@ -202,7 +241,57 @@ function update() {
 
   player.x = Math.max(0, Math.min(world.width - player.w, player.x));
   if (player.y > world.height + 180 || player.y < -220) resetPlayer();
+  updateEnemies();
+  updateAttacks();
   collectItems();
+}
+
+function updateEnemies() {
+  for (const enemy of enemies) {
+    if (!enemy.alive) continue;
+    enemy.x += enemy.dir * 1.1;
+    if (Math.abs(enemy.x - enemy.baseX) > enemy.patrol) enemy.dir *= -1;
+    if (rectsOverlap(player, enemy)) {
+      const now = performance.now();
+      if (now > player.invulnerableUntil) {
+        const damage = Math.max(1, 14 - equipmentStats.defense);
+        player.hp = Math.max(0, player.hp - damage);
+        player.invulnerableUntil = now + 900;
+        document.getElementById("hudHp").textContent = player.hp;
+        player.vx = -player.facing * 9;
+        player.vy = -8 * player.gravitySign;
+        if (player.hp <= 0) {
+          player.hp = 100;
+          document.getElementById("hudHp").textContent = player.hp;
+          resetPlayer();
+        }
+      }
+    }
+  }
+}
+
+function updateAttacks() {
+  for (const shot of attacks) {
+    shot.x += shot.vx;
+    shot.life -= 1;
+    for (const enemy of enemies) {
+      if (!enemy.alive) continue;
+      const hit = shot.x > enemy.x - shot.r && shot.x < enemy.x + enemy.w + shot.r && shot.y > enemy.y - shot.r && shot.y < enemy.y + enemy.h + shot.r;
+      if (hit) {
+        enemy.hp -= shot.damage;
+        shot.life = 0;
+        if (enemy.hp <= 0) {
+          enemy.alive = false;
+          save.coins += 5;
+          document.getElementById("hudCoins").textContent = save.coins;
+          saveProgress();
+        }
+      }
+    }
+  }
+  for (let i = attacks.length - 1; i >= 0; i -= 1) {
+    if (attacks[i].life <= 0) attacks.splice(i, 1);
+  }
 }
 
 function draw() {
@@ -267,13 +356,49 @@ function draw() {
     ctx.shadowBlur = 0;
   });
 
+  enemies.forEach((enemy) => {
+    if (!enemy.alive) return;
+    ctx.fillStyle = "#ff5fc8";
+    ctx.shadowColor = "#ff5fc8";
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.ellipse(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, enemy.w / 2, enemy.h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#07111c";
+    ctx.beginPath();
+    ctx.arc(enemy.x + 17, enemy.y + 15, 4, 0, Math.PI * 2);
+    ctx.arc(enemy.x + 33, enemy.y + 15, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  attacks.forEach((shot) => {
+    ctx.fillStyle = shot.melee ? "rgba(223,252,255,.72)" : "#45efff";
+    ctx.shadowColor = shot.melee ? "#dffcff" : "#45efff";
+    ctx.shadowBlur = 20;
+    if (shot.melee) {
+      ctx.beginPath();
+      ctx.arc(shot.x, shot.y, shot.r, -0.8, 0.8);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "rgba(223,252,255,.86)";
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(shot.x, shot.y, shot.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+  });
+
   ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
   ctx.scale(1, player.gravitySign);
   const slimeColor = slimePalette[equippedSkin.tone] || "#67ff93";
+  drawEquippedAttachments(-1);
   if (skinImage?.complete && skinImage.naturalWidth > 0) {
     ctx.shadowColor = slimeColor;
     ctx.shadowBlur = 24;
     ctx.drawImage(skinImage, -player.w * 0.8, -player.h * 1.05, player.w * 1.6, player.h * 1.8);
+    drawEquippedAttachments(1);
     ctx.restore();
     return;
   }
@@ -289,7 +414,39 @@ function draw() {
   ctx.arc(-8, -3, 4, 0, Math.PI * 2);
   ctx.arc(8, -3, 4, 0, Math.PI * 2);
   ctx.fill();
+  drawEquippedAttachments(1);
   ctx.restore();
+}
+
+function drawEquippedAttachments(layer) {
+  if (layer < 0 && loadout.wings) {
+    ctx.fillStyle = "rgba(69,239,255,.72)";
+    ctx.shadowColor = "#45efff";
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.ellipse(-28, -4, 30, 14, -0.45, 0, Math.PI * 2);
+    ctx.ellipse(28, -4, 30, 14, 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  if (layer > 0 && loadout.defense) {
+    ctx.strokeStyle = "rgba(255,209,102,.8)";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "#ffd166";
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(0, 0, 34, -0.5, Math.PI * 1.15);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+  if (layer > 0 && loadout.offense) {
+    ctx.strokeStyle = loadout.offense.slug === "moon-fang-knife" ? "#dffcff" : "#45efff";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(player.facing * 16, -4);
+    ctx.lineTo(player.facing * 38, -18);
+    ctx.stroke();
+  }
 }
 
 function resize() {

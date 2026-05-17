@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="shoe" x1="45" x2="214" y1="78" y2="186">
+      <stop stop-color="#67ff93"/>
+      <stop offset=".55" stop-color="#45efff"/>
+      <stop offset="1" stop-color="#1b48ff"/>
+    </linearGradient>
+  </defs>
+  <path fill="#67ff93" opacity=".16" d="M42 194c22-38 52-56 90-54 39 2 67 19 84 52-42 22-100 26-174 2Z"/>
+  <path fill="url(#shoe)" d="M48 96h68l28 52h64c13 0 24 11 24 24v14H84c-24 0-42-19-42-43z"/>
+  <path fill="#07111c" opacity=".32" d="M64 176h164v20H64z"/>
+  <path fill="#ffd166" d="M98 66l18 30H80zM148 58l20 38h-42z"/>
+  <path fill="#fff" opacity=".45" d="M86 112h50l12 18H94z"/>
+</svg>
