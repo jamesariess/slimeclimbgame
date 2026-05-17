@@ -27,6 +27,7 @@ require __DIR__ . '/partials/player_nav.php';
   <section class="simple-panel">
     <h2>Add Shop Item</h2>
     <form class="form-stack compact-form" action="actions/admin_content.php" method="post">
+      <?php echo csrf_field(); ?>
       <input type="hidden" name="content_type" value="shop_item">
       <label><span>Name</span><input name="name" required></label>
       <label><span>Slug</span><input name="slug" placeholder="meteor-pink" required></label>
@@ -42,6 +43,7 @@ require __DIR__ . '/partials/player_nav.php';
   <section class="simple-panel">
     <h2>Add Achievement</h2>
     <form class="form-stack compact-form" action="actions/admin_content.php" method="post">
+      <?php echo csrf_field(); ?>
       <input type="hidden" name="content_type" value="achievement">
       <label><span>Name</span><input name="name" required></label>
       <label><span>Slug</span><input name="slug" placeholder="galaxy-climber" required></label>
@@ -70,4 +72,3 @@ require __DIR__ . '/partials/player_nav.php';
   </section>
 </main>
 <?php require __DIR__ . '/partials/foot.php'; ?>
-

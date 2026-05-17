@@ -111,8 +111,11 @@ function flipGravity() {
 async function saveProgress() {
   await fetch("api/progress.php", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "save", ...save }),
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": window.CSRF_TOKEN || "",
+    },
+    body: JSON.stringify({ action: "save", csrf_token: window.CSRF_TOKEN || "", ...save }),
   });
 }
 

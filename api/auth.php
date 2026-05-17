@@ -42,14 +42,23 @@ try {
     if ($action === 'login') {
         $identity = trim((string) ($input['identity'] ?? ''));
         $password = (string) ($input['password'] ?? '');
-        $stmt = $pdo->prepare('SELECT * FROM users WHERE username = :identity OR email = :identity LIMIT 1');
-        $stmt->execute([':identity' => $identity]);
+        if (too_many_login_attempts($identity)) {
+            json_response(['ok' => false, 'message' => 'Too many login attempts. Wait 15 minutes and try again.'], 429);
+        }
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE username = :username_identity OR email = :email_identity LIMIT 1');
+        $stmt->execute([
+            ':username_identity' => $identity,
+            ':email_identity' => $identity,
+        ]);
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
+            record_login_failure($identity);
             json_response(['ok' => false, 'message' => 'Invalid username/email or password.'], 401);
         }
 
+        clear_login_attempts($identity);
+        session_regenerate_id(true);
         $_SESSION['user'] = public_user($user);
         json_response(['ok' => true, 'user' => $_SESSION['user']]);
     }

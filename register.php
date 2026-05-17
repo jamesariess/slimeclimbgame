@@ -17,6 +17,7 @@ require __DIR__ . '/partials/head.php';
       <p class="muted">Create your online profile and start with beginner coins, gems, and the Nebula Green skin.</p>
     </div>
     <form class="form-stack" action="actions/register.php" method="post">
+      <?php echo csrf_field(); ?>
       <label>
         <span>Username</span>
         <input name="username" type="text" autocomplete="username" minlength="3" maxlength="24" required>
@@ -36,4 +37,3 @@ require __DIR__ . '/partials/head.php';
   </section>
 </main>
 <?php require __DIR__ . '/partials/foot.php'; ?>
-

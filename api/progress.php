@@ -4,6 +4,9 @@ declare(strict_types=1);
 require __DIR__ . '/config.php';
 $userId = require_user();
 $input = json_decode(file_get_contents('php://input'), true) ?: [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_from_request($input);
+}
 $action = $_GET['action'] ?? ($input['action'] ?? 'load');
 
 if ($action === 'load') {

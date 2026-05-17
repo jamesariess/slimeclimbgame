@@ -14,6 +14,7 @@
       <a href="admin_content.php">Admin</a>
     <?php endif; ?>
     <form action="actions/logout.php" method="post">
+      <?php echo csrf_field(); ?>
       <button class="ghost small" type="submit">Logout</button>
     </form>
   </nav>

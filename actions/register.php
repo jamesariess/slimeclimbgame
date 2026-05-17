@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../api/config.php';
 start_app_session();
+verify_csrf_from_post();
 
 $username = trim((string) ($_POST['username'] ?? ''));
 $email = strtolower(trim((string) ($_POST['email'] ?? '')));
@@ -37,6 +38,7 @@ try {
     create_default_save($pdo, $userId);
     $pdo->commit();
 
+    session_regenerate_id(true);
     $_SESSION['user'] = ['id' => $userId, 'username' => $username, 'email' => $email];
     header('Location: ../menu.php');
     exit;

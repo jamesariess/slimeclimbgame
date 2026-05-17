@@ -70,6 +70,14 @@ CREATE TABLE IF NOT EXISTS player_achievements (
   CONSTRAINT fk_player_ach_achievement FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  identity_hash CHAR(64) NOT NULL,
+  ip_address VARCHAR(45) NOT NULL,
+  attempted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_login_attempts_lookup (identity_hash, ip_address, attempted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT IGNORE INTO shop_items
   (slug, name, item_type, description, price_coins, price_gems, tone)
 VALUES

@@ -119,6 +119,16 @@ function migrate(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
     );
 
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS login_attempts (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            identity_hash CHAR(64) NOT NULL,
+            ip_address VARCHAR(45) NOT NULL,
+            attempted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_login_attempts_lookup (identity_hash, ip_address, attempted_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    );
+
     seed_game_content($pdo);
 }
 
@@ -159,8 +169,52 @@ function seed_game_content(PDO $pdo): void
 function start_app_session(): void
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
+        ini_set('session.use_strict_mode', '1');
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
         session_start();
     }
+}
+
+function csrf_token(): string
+{
+    start_app_session();
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function csrf_field(): string
+{
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') . '">';
+}
+
+function verify_csrf_token(?string $token): void
+{
+    start_app_session();
+    if (!$token || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
+        http_response_code(419);
+        exit('Security token expired. Go back and try again.');
+    }
+}
+
+function verify_csrf_from_post(): void
+{
+    verify_csrf_token((string) ($_POST['csrf_token'] ?? ''));
+}
+
+function verify_csrf_from_request(?array $jsonInput = null): void
+{
+    $headers = function_exists('getallheaders') ? getallheaders() : [];
+    $token = $headers['X-CSRF-Token'] ?? $headers['x-csrf-token'] ?? ($jsonInput['csrf_token'] ?? '');
+    verify_csrf_token((string) $token);
 }
 
 function public_user(array $user): array
@@ -211,6 +265,55 @@ function create_default_save(PDO $pdo, int $userId): void
         ':progress' => json_encode(new stdClass()),
     ]);
     ensure_starter_inventory($pdo, $userId);
+}
+
+function login_identity_hash(string $identity): string
+{
+    return hash('sha256', strtolower(trim($identity)));
+}
+
+function client_ip(): string
+{
+    return substr((string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'), 0, 45);
+}
+
+function too_many_login_attempts(string $identity): bool
+{
+    $stmt = db()->prepare(
+        'SELECT COUNT(*) FROM login_attempts
+         WHERE identity_hash = :identity_hash
+           AND ip_address = :ip_address
+           AND attempted_at > (NOW() - INTERVAL 15 MINUTE)'
+    );
+    $stmt->execute([
+        ':identity_hash' => login_identity_hash($identity),
+        ':ip_address' => client_ip(),
+    ]);
+    return (int) $stmt->fetchColumn() >= 8;
+}
+
+function record_login_failure(string $identity): void
+{
+    $stmt = db()->prepare(
+        'INSERT INTO login_attempts (identity_hash, ip_address)
+         VALUES (:identity_hash, :ip_address)'
+    );
+    $stmt->execute([
+        ':identity_hash' => login_identity_hash($identity),
+        ':ip_address' => client_ip(),
+    ]);
+}
+
+function clear_login_attempts(string $identity): void
+{
+    $stmt = db()->prepare(
+        'DELETE FROM login_attempts
+         WHERE identity_hash = :identity_hash AND ip_address = :ip_address'
+    );
+    $stmt->execute([
+        ':identity_hash' => login_identity_hash($identity),
+        ':ip_address' => client_ip(),
+    ]);
 }
 
 function ensure_starter_inventory(PDO $pdo, int $userId): void
@@ -279,13 +382,18 @@ function award_achievement_by_name(int $userId, string $name): void
     ]);
 }
 
-function load_player_save(int $userId): array
+function current_save_row(int $userId): array
 {
     $pdo = db();
     create_default_save($pdo, $userId);
     $stmt = $pdo->prepare('SELECT * FROM player_saves WHERE user_id = :user_id');
     $stmt->execute([':user_id' => $userId]);
-    $row = $stmt->fetch();
+    return $stmt->fetch();
+}
+
+function load_player_save(int $userId): array
+{
+    $row = current_save_row($userId);
 
     return [
         'level' => (int) $row['level'],
@@ -305,6 +413,21 @@ function load_player_save(int $userId): array
 
 function save_player_progress(int $userId, array $save): void
 {
+    $current = current_save_row($userId);
+    $currentLevel = (int) $current['level'];
+    $currentXp = (int) $current['xp'];
+    $currentCoins = (int) $current['coins'];
+    $currentGems = (int) $current['gems'];
+    $newLevel = max(1, min($currentLevel + 1, min(99, (int) ($save['level'] ?? $currentLevel))));
+    $newXp = max($currentXp, min($currentXp + 150, (int) ($save['xp'] ?? $currentXp)));
+    $newCoins = max(0, min($currentCoins + 75, (int) ($save['coins'] ?? $currentCoins)));
+    $newGems = max(0, min($currentGems + 1, (int) ($save['gems'] ?? $currentGems)));
+    $allowedCheckpoints = ['Start', 'Lunar Gate', 'Orion Peak'];
+    $checkpoint = (string) ($save['current_checkpoint'] ?? $current['current_checkpoint']);
+    if (!in_array($checkpoint, $allowedCheckpoints, true)) {
+        $checkpoint = $current['current_checkpoint'];
+    }
+
     $stmt = db()->prepare(
         'UPDATE player_saves
          SET level = :level, xp = :xp, coins = :coins, gems = :gems,
@@ -314,13 +437,13 @@ function save_player_progress(int $userId, array $save): void
     );
     $stmt->execute([
         ':user_id' => $userId,
-        ':level' => max(1, min(99, (int) ($save['level'] ?? 1))),
-        ':xp' => max(0, (int) ($save['xp'] ?? 0)),
-        ':coins' => max(0, (int) ($save['coins'] ?? 0)),
-        ':gems' => max(0, (int) ($save['gems'] ?? 0)),
+        ':level' => $newLevel,
+        ':xp' => $newXp,
+        ':coins' => $newCoins,
+        ':gems' => $newGems,
         ':rank_name' => substr((string) ($save['rank'] ?? 'Rookie Comet'), 0, 40),
-        ':current_checkpoint' => substr((string) ($save['current_checkpoint'] ?? 'Start'), 0, 40),
-        ':skins' => json_encode(array_values($save['skins'] ?? ['Nebula Green'])),
+        ':current_checkpoint' => $checkpoint,
+        ':skins' => $current['skins'],
         ':achievements' => json_encode(array_values($save['achievements'] ?? [])),
         ':progress' => json_encode((object) ($save['progress'] ?? [])),
     ]);

@@ -17,6 +17,7 @@ require __DIR__ . '/partials/head.php';
       <p class="muted">Load coins, skins, checkpoints, achievements, and galaxy progress from MySQL.</p>
     </div>
     <form class="form-stack" action="actions/login.php" method="post">
+      <?php echo csrf_field(); ?>
       <label>
         <span>Username or email</span>
         <input name="identity" type="text" autocomplete="username" required>
@@ -33,4 +34,3 @@ require __DIR__ . '/partials/head.php';
   </section>
 </main>
 <?php require __DIR__ . '/partials/foot.php'; ?>
-

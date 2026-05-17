@@ -21,8 +21,8 @@ require __DIR__ . '/partials/head.php';
 </div>
 <script>
   window.SLIME_SAVE = <?php echo json_encode($save); ?>;
+  window.CSRF_TOKEN = <?php echo json_encode(csrf_token()); ?>;
 </script>
 <script src="assets/js/game.js"></script>
 </body>
 </html>
-

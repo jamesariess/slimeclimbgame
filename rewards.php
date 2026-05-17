@@ -25,9 +25,9 @@ require __DIR__ . '/partials/player_nav.php';
     <h1><?php echo $claimed ? 'Reward Claimed' : 'Claim Today'; ?></h1>
     <p class="muted">Collect 50 coins and 1 gem once per day.</p>
     <form method="post">
+      <?php echo csrf_field(); ?>
       <button class="primary button-xl" type="submit" <?php echo $claimed ? 'disabled' : ''; ?>><?php echo $claimed ? 'Come Back Tomorrow' : 'Claim Reward'; ?></button>
     </form>
   </section>
 </main>
 <?php require __DIR__ . '/partials/foot.php'; ?>
-

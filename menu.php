@@ -17,6 +17,7 @@ require __DIR__ . '/partials/head.php';
       <a class="button primary button-xl" href="home.php">Start</a>
       <a class="button secondary button-xl" href="settings.php">Settings</a>
       <form action="actions/logout.php" method="post">
+        <?php echo csrf_field(); ?>
         <button class="ghost button-xl" type="submit">Logout</button>
       </form>
     </div>
@@ -29,4 +30,3 @@ require __DIR__ . '/partials/head.php';
   </section>
 </main>
 <?php require __DIR__ . '/partials/foot.php'; ?>
-

@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../api/config.php';
 $user = require_login();
+verify_csrf_from_post();
 
 if (strtolower($user['username']) !== 'admin') {
     header('Location: ../menu.php');
