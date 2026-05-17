@@ -26,10 +26,7 @@ require __DIR__ . '/partials/head.php';
     <h1>Slime Climb Galaxy</h1>
     <p class="title-copy">Bounce through neon planets, climb gravity towers, collect comet coins, and build your slime hero.</p>
     <a class="button primary button-xl title-start-button loading-link" href="login.php">Start Game</a>
-    <div class="title-auth-actions" aria-label="Account actions">
-      <a class="button secondary button-xl loading-link" href="login.php">Login</a>
-      <a class="button ghost button-xl loading-link" href="register.php">Register</a>
-    </div>
+
   </section>
 </main>
 <?php require __DIR__ . '/partials/foot.php'; ?>

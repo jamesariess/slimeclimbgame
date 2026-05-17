@@ -53,6 +53,29 @@ button.primary:hover::after {
   visibility: visible;
 }
 
+button[aria-busy="true"],
+.button[aria-busy="true"] {
+  pointer-events: none;
+  filter: saturate(1.2) brightness(1.08);
+}
+
+button[aria-busy="true"]::before,
+.button[aria-busy="true"]::before {
+  content: "";
+  position: absolute;
+  right: 14px;
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(3, 19, 29, .28);
+  border-top-color: rgba(3, 19, 29, .9);
+  border-radius: 50%;
+  animation: busySpin 720ms linear infinite;
+}
+
+@keyframes busySpin {
+  to { transform: rotate(360deg); }
+}
+
 .loader-slime {
   width: 118px;
   aspect-ratio: 1.2;

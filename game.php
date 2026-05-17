@@ -17,6 +17,7 @@ require __DIR__ . '/partials/head.php';
   <span>HP <strong id="hudHp">100</strong></span>
   <span>ATK <strong id="hudAtk"><?php echo (int) $stats['attack']; ?></strong></span>
   <span>DEF <strong id="hudDef"><?php echo (int) $stats['defense']; ?></strong></span>
+  <span>Climb <strong id="hudDistance">0m</strong></span>
   <span id="hudCheckpoint">Checkpoint: <?php echo htmlspecialchars($save['current_checkpoint']); ?></span>
 </header>
 <canvas id="gameCanvas"></canvas>
@@ -35,6 +36,7 @@ require __DIR__ . '/partials/head.php';
   window.SLIME_STATS = <?php echo json_encode($stats); ?>;
   window.CSRF_TOKEN = <?php echo json_encode(csrf_token()); ?>;
 </script>
+<script src="assets/js/game-stages.js"></script>
 <script src="assets/js/game.js"></script>
 </body>
 </html>

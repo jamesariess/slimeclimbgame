@@ -36,14 +36,69 @@ document.addEventListener("pointerdown", (event) => {
   }
 });
 
-document.querySelectorAll(".loading-link").forEach((link) => {
-  link.addEventListener("click", () => {
+const SlimeLoader = (() => {
+  let fallbackTimer;
+
+  function show(message = "Preparing your climb...") {
+    const label = document.querySelector(".page-loader strong");
+    if (label) label.textContent = message;
+    clearTimeout(fallbackTimer);
     document.body.classList.add("is-loading-next-page");
-  });
+  }
+
+  function hide() {
+    clearTimeout(fallbackTimer);
+    document.body.classList.remove("is-loading-next-page");
+  }
+
+  function flash(message = "Working on it...") {
+    show(message);
+    fallbackTimer = setTimeout(hide, 700);
+  }
+
+  return { show, hide, flash };
+})();
+
+window.SlimeLoader = SlimeLoader;
+
+function isInternalNavigation(link) {
+  if (!link || link.target === "_blank" || link.hasAttribute("download")) return false;
+  const href = link.getAttribute("href") || "";
+  if (!href || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:")) return false;
+  try {
+    return new URL(link.href, window.location.href).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a");
+  if (isInternalNavigation(link)) {
+    SlimeLoader.show("Opening galaxy screen...");
+    return;
+  }
+
+  const button = event.target.closest("button");
+  if (!button || button.disabled || button.matches("[data-control]")) return;
+  if (button.type === "submit" && button.form) return;
+  SlimeLoader.flash("Applying action...");
 });
 
-document.querySelectorAll("form").forEach((form) => {
-  form.addEventListener("submit", () => {
-    document.body.classList.add("is-loading-next-page");
-  });
+document.addEventListener("submit", (event) => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement)) return;
+  if (!form.checkValidity()) return;
+  const submitter = event.submitter;
+  if (submitter && submitter.disabled) return;
+  SlimeLoader.show("Saving changes...");
+  if (submitter) submitter.setAttribute("aria-busy", "true");
+});
+
+window.addEventListener("beforeunload", () => {
+  SlimeLoader.show("Loading...");
+});
+
+window.addEventListener("pageshow", () => {
+  SlimeLoader.hide();
 });

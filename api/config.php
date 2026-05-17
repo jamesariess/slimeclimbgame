@@ -812,7 +812,7 @@ function save_player_progress(int $userId, array $save): void
     $newXp = max($currentXp, min($currentXp + 150, (int) ($save['xp'] ?? $currentXp)));
     $newCoins = max(0, min($currentCoins + 75, (int) ($save['coins'] ?? $currentCoins)));
     $newGems = max(0, min($currentGems + 1, (int) ($save['gems'] ?? $currentGems)));
-    $allowedCheckpoints = ['Start', 'Lunar Gate', 'Orion Peak'];
+    $allowedCheckpoints = ['Start', 'Lunar Gate', 'Orion Peak', 'Launch Garden', 'Crystal Gate', 'Orion Lift', 'Galaxy Crown'];
     $checkpoint = (string) ($save['current_checkpoint'] ?? $current['current_checkpoint']);
     if (!in_array($checkpoint, $allowedCheckpoints, true)) {
         $checkpoint = $current['current_checkpoint'];
