@@ -350,7 +350,24 @@ input {
   outline: none;
 }
 
-input:focus {
+select,
+textarea {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--ink);
+  background: rgba(2, 6, 20, 0.92);
+  outline: none;
+}
+
+select {
+  color-scheme: dark;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
   border-color: var(--cyan);
   box-shadow: 0 0 24px rgba(69, 239, 255, 0.28);
 }
@@ -853,6 +870,110 @@ input:focus {
 @keyframes heroIdle {
   0%, 100% { transform: translateY(0) scale(1.02, .98); }
   50% { transform: translateY(-24px) scale(.98, 1.04); }
+}
+
+.slime-loadout-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(560px, 82vw);
+  min-height: min(500px, 78vw);
+  margin-top: -28px;
+  animation: heroIdle 2.6s ease-in-out infinite;
+}
+
+.slime-loadout-stage .character-slime,
+.slime-loadout-stage .loadout-asset {
+  position: relative;
+  z-index: 3;
+  animation: none;
+}
+
+.slime-gear {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 0 18px rgba(69,239,255,.48)) drop-shadow(0 12px 18px rgba(0,0,0,.35));
+}
+
+.gear-wings {
+  z-index: 1;
+  width: min(520px, 86vw);
+  height: 240px;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: .96;
+}
+
+.gear-shoe {
+  width: 92px;
+  height: 62px;
+  bottom: 20%;
+  z-index: 5;
+  filter: drop-shadow(0 0 16px rgba(103,255,147,.5)) drop-shadow(0 12px 12px rgba(0,0,0,.42));
+}
+
+.gear-shoe-left {
+  left: 34%;
+  transform: translateX(-50%) rotate(-10deg);
+}
+
+.gear-shoe-right {
+  right: 34%;
+  transform: translateX(50%) scaleX(-1) rotate(-10deg);
+}
+
+.gear-shield {
+  width: 150px;
+  height: 150px;
+  right: 12%;
+  top: 43%;
+  filter: drop-shadow(0 0 22px rgba(255,209,102,.54)) drop-shadow(0 16px 18px rgba(0,0,0,.36));
+  animation: assetPulse 2.5s ease-in-out infinite;
+}
+
+.gear-weapon {
+  width: 156px;
+  height: 156px;
+  left: 10%;
+  top: 48%;
+  transform: rotate(-24deg);
+}
+
+.compact-loadout-stage {
+  width: min(360px, 82vw);
+  min-height: 300px;
+  margin: 4px auto 0;
+}
+
+.compact-loadout-stage .character-slime,
+.compact-loadout-stage .loadout-asset {
+  width: min(250px, 70vw);
+}
+
+.compact-loadout-stage .gear-wings {
+  width: min(360px, 82vw);
+  height: 160px;
+}
+
+.compact-loadout-stage .gear-shoe {
+  width: 66px;
+  height: 46px;
+  bottom: 18%;
+}
+
+.compact-loadout-stage .gear-shield {
+  width: 104px;
+  height: 104px;
+}
+
+.compact-loadout-stage .gear-weapon {
+  width: 112px;
+  height: 112px;
 }
 
 .stage-caption {
@@ -2084,6 +2205,58 @@ input:focus {
 .compact-form {
   padding: 0;
   gap: 12px;
+}
+
+.admin-form-section {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgba(69,239,255,.18);
+  border-radius: 18px 12px 22px 12px;
+  background:
+    radial-gradient(circle at 8% 20%, rgba(69,239,255,.16), transparent 36%),
+    rgba(255,255,255,.055);
+}
+
+.admin-form-section strong {
+  color: var(--cyan);
+  font-family: "Baloo 2", Inter, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.admin-form-section p,
+.field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: .86rem;
+  font-weight: 800;
+}
+
+.type-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.type-guide-grid span {
+  min-height: 54px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.1), rgba(255,255,255,.035)),
+    rgba(6,10,31,.72);
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.type-guide-grid strong {
+  display: block;
+  color: var(--ink);
+  font-size: .95rem;
 }
 
 .admin-table {

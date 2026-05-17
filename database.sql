@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS shop_items (
   stat_defense INT NOT NULL DEFAULT 0,
   stat_jump INT NOT NULL DEFAULT 0,
   power_effect VARCHAR(120) NOT NULL DEFAULT '',
+  effect_duration_seconds INT UNSIGNED NOT NULL DEFAULT 300,
   stackable TINYINT(1) NOT NULL DEFAULT 0,
   visual_type ENUM('css_slime', 'image') NOT NULL DEFAULT 'css_slime',
   image_path VARCHAR(255) NULL,
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS player_effects (
   user_id INT UNSIGNED NOT NULL,
   item_id INT UNSIGNED NOT NULL,
   stacks INT UNSIGNED NOT NULL DEFAULT 0,
+  expires_at DATETIME NOT NULL,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, item_id),
   CONSTRAINT fk_effects_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -104,19 +106,19 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO shop_items
-  (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, stat_jump, power_effect, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
+  (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, stat_jump, power_effect, stackable, effect_duration_seconds, visual_type, image_path, animation_style, sale_percent, limited_until)
 VALUES
-  ('nebula-green', 'Nebula Green', 'skin', 'skins', 'common', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float', 0, NULL),
-  ('meteor-pink', 'Meteor Pink', 'skin', 'skins', 'rare', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float', 0, NULL),
-  ('solar-gold', 'Solar Gold', 'skin', 'limited', 'legendary', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float', 15, NULL),
-  ('void-cyan', 'Void Cyan', 'skin', 'seasonal', 'epic', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', NULL, 'float', 0, NULL),
-  ('comet-slinger', 'Comet Slinger', 'offense', 'boosts', 'rare', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 0, 'Unlocks ranged slime shots.', 0, 'image', 'assets/images/items/comet-slinger.svg', 'pulse', 0, NULL),
-  ('moon-fang-knife', 'Moon Fang Knife', 'offense', 'boosts', 'rare', 'A close-range crescent blade for slicing galaxy monsters.', 135, 0, 'cyan', 12, 0, 0, 'Melee slash attack.', 0, 'image', 'assets/images/items/moon-fang-knife.svg', 'pulse', 0, NULL),
-  ('star-guard-shell', 'Star Guard Shell', 'defense', 'boosts', 'epic', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 0, 'Reduces incoming damage.', 0, 'image', 'assets/images/items/star-guard-shell.svg', 'float', 10, NULL),
-  ('gravity-boots', 'Gravity Boots', 'tool', 'bundles', 'mythic', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 2, 'Improves parkour control.', 0, 'image', 'assets/images/items/gravity-boots.svg', 'bounce', 0, NULL),
-  ('jump-boost-shoes', 'Jump Boost Shoes', 'tool', 'boosts', 'rare', 'Springy moon shoes that boost jump height.', 130, 0, 'green', 0, 2, 4, 'Higher jump power.', 0, 'image', 'assets/images/items/jump-boost-shoes.svg', 'bounce', 0, NULL),
-  ('nebula-wings', 'Nebula Wings', 'wings', 'boosts', 'epic', 'Lightweight galaxy wings that lift slime jumps.', 190, 1, 'cyan', 3, 2, 5, 'Adds jump lift and aerial attack force.', 0, 'image', 'assets/images/items/nebula-wings.svg', 'float', 0, NULL),
-  ('mint-burst-potion', 'Mint Burst Potion', 'potion', 'boosts', 'common', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 2, 0, 2, 'Stackable speed and jump boost.', 1, 'image', 'assets/images/items/mint-burst-potion.svg', 'pulse', 0, NULL);
+  ('nebula-green', 'Nebula Green', 'skin', 'skins', 'common', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', NULL, 'float', 0, NULL),
+  ('meteor-pink', 'Meteor Pink', 'skin', 'skins', 'rare', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', NULL, 'float', 0, NULL),
+  ('solar-gold', 'Solar Gold', 'skin', 'limited', 'legendary', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', NULL, 'float', 15, NULL),
+  ('void-cyan', 'Void Cyan', 'skin', 'seasonal', 'epic', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', NULL, 'float', 0, NULL),
+  ('comet-slinger', 'Comet Slinger', 'offense', 'boosts', 'rare', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 0, 'Unlocks ranged slime shots.', 0, 0, 'image', 'assets/images/items/comet-slinger.svg', 'pulse', 0, NULL),
+  ('moon-fang-knife', 'Moon Fang Knife', 'offense', 'boosts', 'rare', 'A close-range crescent blade for slicing galaxy monsters.', 135, 0, 'cyan', 12, 0, 0, 'Melee slash attack.', 0, 0, 'image', 'assets/images/items/moon-fang-knife.svg', 'pulse', 0, NULL),
+  ('star-guard-shell', 'Star Guard Shell', 'defense', 'boosts', 'epic', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 0, 'Reduces incoming damage.', 0, 0, 'image', 'assets/images/items/star-guard-shell.svg', 'float', 10, NULL),
+  ('gravity-boots', 'Gravity Boots', 'tool', 'bundles', 'mythic', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 2, 'Improves parkour control.', 0, 0, 'image', 'assets/images/items/gravity-boots.svg', 'bounce', 0, NULL),
+  ('jump-boost-shoes', 'Jump Boost Shoes', 'tool', 'boosts', 'rare', 'Springy moon shoes that boost jump height.', 130, 0, 'green', 0, 2, 4, 'Higher jump power.', 0, 0, 'image', 'assets/images/items/jump-boost-shoes.svg', 'bounce', 0, NULL),
+  ('nebula-wings', 'Nebula Wings', 'wings', 'boosts', 'epic', 'Lightweight galaxy wings that lift slime jumps.', 190, 1, 'cyan', 3, 2, 5, 'Adds jump lift and aerial attack force.', 0, 0, 'image', 'assets/images/items/nebula-wings.svg', 'float', 0, NULL),
+  ('mint-burst-potion', 'Mint Burst Potion', 'potion', 'boosts', 'common', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 2, 0, 2, 'Stackable speed and jump boost.', 1, 300, 'image', 'assets/images/items/mint-burst-potion.svg', 'pulse', 0, NULL);
 
 INSERT IGNORE INTO achievements
   (slug, name, description, reward_coins)

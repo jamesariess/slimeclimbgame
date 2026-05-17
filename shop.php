@@ -107,6 +107,7 @@ require __DIR__ . '/partials/player_nav.php';
             <?php if ((int) $item['stat_attack'] !== 0): ?><span>ATK +<?php echo (int) $item['stat_attack']; ?></span><?php endif; ?>
             <?php if ((int) $item['stat_defense'] !== 0): ?><span>DEF +<?php echo (int) $item['stat_defense']; ?></span><?php endif; ?>
             <?php if ((int) $item['stat_jump'] !== 0): ?><span>JMP +<?php echo (int) $item['stat_jump']; ?></span><?php endif; ?>
+            <?php if ($item['item_type'] === 'potion'): ?><span><?php echo (int) $item['effect_duration_seconds']; ?>s timer</span><?php endif; ?>
             <?php if ($item['power_effect'] !== ''): ?><span><?php echo htmlspecialchars($item['power_effect']); ?></span><?php endif; ?>
           </div>
         </div>

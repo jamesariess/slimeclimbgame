@@ -5,7 +5,7 @@ $inventory = get_player_inventory((int) $user['id']);
 $loadout = equipped_loadout((int) $user['id']);
 $effects = active_effects((int) $user['id']);
 $stats = total_loadout_stats($loadout, $effects);
-$featured = $loadout['skin'] ?? ($inventory[0] ?? null);
+$featured = $loadout['skin'] ?? null;
 $message = $_SESSION['flash_success'] ?? '';
 $error = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
@@ -19,7 +19,7 @@ require __DIR__ . '/partials/player_nav.php';
     <div>
       <p class="kicker">Loadout vault</p>
       <h1>Inventory</h1>
-      <p class="muted">Review owned skins and equipped cosmetics before launching your next climb.</p>
+      <p class="muted">Equip one skin, one weapon, one shield, one tool/shoes item, and one wings item. Potions stack for a limited time after use.</p>
       <?php if ($message): ?><p class="form-success"><?php echo htmlspecialchars($message); ?></p><?php endif; ?>
       <?php if ($error): ?><p class="form-error"><?php echo htmlspecialchars($error); ?></p><?php endif; ?>
     </div>
@@ -31,23 +31,32 @@ require __DIR__ . '/partials/player_nav.php';
   <section class="loadout-layout">
     <div class="loadout-preview">
       <div class="ring ring-one"></div>
-      <?php if (($featured['visual_type'] ?? '') === 'image' && !empty($featured['image_path'])): ?>
-        <div class="slime-asset loadout-asset <?php echo htmlspecialchars($featured['animation_style']); ?>">
-          <img src="<?php echo htmlspecialchars($featured['image_path']); ?>" alt="<?php echo htmlspecialchars($featured['name']); ?>">
-        </div>
-      <?php else: ?>
-        <div class="hero-slime character-slime" aria-hidden="true"></div>
-      <?php endif; ?>
+      <div class="slime-loadout-stage compact-loadout-stage">
+        <?php if (!empty($loadout['wings'])): ?><div class="slime-gear gear-wings" style="background-image: url('<?php echo htmlspecialchars($loadout['wings']['image_path'] ?: 'assets/images/items/nebula-wings.svg'); ?>')" aria-hidden="true"></div><?php endif; ?>
+        <?php if (($featured['visual_type'] ?? '') === 'image' && !empty($featured['image_path'])): ?>
+          <div class="slime-asset loadout-asset <?php echo htmlspecialchars($featured['animation_style']); ?>">
+            <img src="<?php echo htmlspecialchars($featured['image_path']); ?>" alt="<?php echo htmlspecialchars($featured['name']); ?>">
+          </div>
+        <?php else: ?>
+          <div class="hero-slime character-slime <?php echo htmlspecialchars($featured['tone'] ?? 'green'); ?>" aria-hidden="true"></div>
+        <?php endif; ?>
+        <?php if (!empty($loadout['tool'])): ?>
+          <div class="slime-gear gear-shoe gear-shoe-left" style="background-image: url('<?php echo htmlspecialchars($loadout['tool']['image_path'] ?: 'assets/images/items/jump-boost-shoes.svg'); ?>')" aria-hidden="true"></div>
+          <div class="slime-gear gear-shoe gear-shoe-right" style="background-image: url('<?php echo htmlspecialchars($loadout['tool']['image_path'] ?: 'assets/images/items/jump-boost-shoes.svg'); ?>')" aria-hidden="true"></div>
+        <?php endif; ?>
+        <?php if (!empty($loadout['defense'])): ?><div class="slime-gear gear-shield" style="background-image: url('<?php echo htmlspecialchars($loadout['defense']['image_path'] ?: 'assets/images/items/star-guard-shell.svg'); ?>')" aria-hidden="true"></div><?php endif; ?>
+        <?php if (!empty($loadout['offense'])): ?><div class="slime-gear gear-weapon" style="background-image: url('<?php echo htmlspecialchars($loadout['offense']['image_path'] ?: 'assets/images/items/moon-fang-knife.svg'); ?>')" aria-hidden="true"></div><?php endif; ?>
+      </div>
       <p class="kicker">Equipped</p>
       <h2><?php echo htmlspecialchars($featured['name'] ?? 'Nebula Green'); ?></h2>
       <div class="loadout-slots">
         <span>Offense: <?php echo htmlspecialchars($loadout['offense']['name'] ?? 'Empty'); ?></span>
         <span>Defense: <?php echo htmlspecialchars($loadout['defense']['name'] ?? 'Empty'); ?></span>
-        <span>Tool: <?php echo htmlspecialchars($loadout['tool']['name'] ?? 'Empty'); ?></span>
+        <span>Tool/Shoes: <?php echo htmlspecialchars($loadout['tool']['name'] ?? 'Empty'); ?></span>
         <span>Wings: <?php echo htmlspecialchars($loadout['wings']['name'] ?? 'Empty'); ?></span>
         <span>Total ATK: <?php echo (int) $stats['attack']; ?> / DEF: <?php echo (int) $stats['defense']; ?> / JMP: +<?php echo (int) $stats['jump']; ?></span>
         <?php foreach ($effects as $effect): ?>
-          <span>Effect: <?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?></span>
+          <span>Timed potion: <?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?> - <?php echo (int) $effect['seconds_remaining']; ?>s left</span>
         <?php endforeach; ?>
       </div>
     </div>

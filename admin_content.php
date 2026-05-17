@@ -25,22 +25,35 @@ require __DIR__ . '/partials/player_nav.php';
     <form class="form-stack compact-form" action="actions/admin_content.php" method="post" enctype="multipart/form-data">
       <?php echo csrf_field(); ?>
       <input type="hidden" name="content_type" value="shop_item">
+      <div class="admin-form-section">
+        <strong>1. Item identity</strong>
+        <p>Name it, describe it, then choose what role it has in the game.</p>
+      </div>
       <label><span>Name</span><input name="name" required></label>
       <label><span>Slug</span><input name="slug" placeholder="meteor-pink" required></label>
       <label><span>Description</span><input name="description" required></label>
       <label>
-        <span>Type</span>
+        <span>Item role</span>
         <select name="item_type" required>
-          <option value="skin">Skin</option>
-          <option value="offense">Offense weapon</option>
-          <option value="defense">Defense gear</option>
-          <option value="tool">Tool / shoes</option>
-          <option value="wings">Wings</option>
-          <option value="potion">Potion</option>
+          <option value="skin">Skin - changes slime body color/image only</option>
+          <option value="offense">Offense - weapon, knife, blaster, throwing tool</option>
+          <option value="defense">Defense - shield, armor, shell protection</option>
+          <option value="tool">Tool / shoes - boots, jump gear, parkour equipment</option>
+          <option value="wings">Wings - back equipment for jump or aerial bonuses</option>
+          <option value="potion">Potion - consumable timed effect that stacks</option>
         </select>
+        <small class="field-hint">Only one skin, offense, defense, tool, and wings item can be equipped at a time. Potions are used and expire after their timer.</small>
       </label>
+      <div class="type-guide-grid" aria-label="Item role guide">
+        <span><strong>Skin</strong> visual body</span>
+        <span><strong>Offense</strong> ATK damage</span>
+        <span><strong>Defense</strong> DEF protection</span>
+        <span><strong>Tool</strong> shoes / movement</span>
+        <span><strong>Wings</strong> back gear + jump</span>
+        <span><strong>Potion</strong> timed stack</span>
+      </div>
       <label>
-        <span>Category</span>
+        <span>Shop shelf</span>
         <select name="category">
           <option value="skins">Skins</option>
           <option value="boosts">Boosts</option>
@@ -49,6 +62,7 @@ require __DIR__ . '/partials/player_nav.php';
           <option value="limited">Limited</option>
           <option value="seasonal">Seasonal</option>
         </select>
+        <small class="field-hint">This controls which shop tab shows the item. Gear usually belongs in Boosts or Bundles.</small>
       </label>
       <label>
         <span>Rarity</span>
@@ -60,21 +74,34 @@ require __DIR__ . '/partials/player_nav.php';
           <option value="mythic">Mythic</option>
         </select>
       </label>
+      <div class="admin-form-section">
+        <strong>2. Price and event rules</strong>
+        <p>Use coins for normal items, gems for premium items, and limited date for timed shop offers.</p>
+      </div>
       <label><span>Coin price</span><input name="price_coins" type="number" min="0" value="0"></label>
       <label><span>Gem price</span><input name="price_gems" type="number" min="0" value="0"></label>
       <label><span>Sale percent</span><input name="sale_percent" type="number" min="0" max="90" value="0"></label>
       <label><span>Limited until</span><input name="limited_until" type="datetime-local"></label>
+      <div class="admin-form-section">
+        <strong>3. Gameplay stats</strong>
+        <p>Skin should usually stay 0. Weapons use ATK, shields use DEF, shoes/wings use JMP, potions can use all three.</p>
+      </div>
       <label><span>Color tone</span><input name="tone" value="green" required></label>
       <label><span>Attack stat</span><input name="stat_attack" type="number" value="0"></label>
       <label><span>Defense stat</span><input name="stat_defense" type="number" value="0"></label>
       <label><span>Jump stat</span><input name="stat_jump" type="number" value="0"></label>
       <label><span>Power effect</span><input name="power_effect" placeholder="Unlocks ranged slime shots."></label>
+      <label><span>Potion duration seconds</span><input name="effect_duration_seconds" type="number" min="0" max="86400" value="300"></label>
       <label class="toggle-row premium-toggle"><span>Stackable item</span><input name="stackable" type="checkbox" value="1"></label>
+      <div class="admin-form-section">
+        <strong>4. Visual art</strong>
+        <p>Use generated slime for skins or upload/path an image for gear like shoes, knife, shield, wings, and potions.</p>
+      </div>
       <label>
         <span>Visual type</span>
         <select name="visual_type">
           <option value="css_slime">Generated animated slime</option>
-          <option value="image">Uploaded image slime</option>
+          <option value="image">Image item art</option>
         </select>
       </label>
       <label><span>Upload item image</span><input name="slime_image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>

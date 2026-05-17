@@ -87,6 +87,7 @@ function migrate(PDO $pdo): void
             stat_defense INT NOT NULL DEFAULT 0,
             stat_jump INT NOT NULL DEFAULT 0,
             power_effect VARCHAR(120) NOT NULL DEFAULT "",
+            effect_duration_seconds INT UNSIGNED NOT NULL DEFAULT 300,
             stackable TINYINT(1) NOT NULL DEFAULT 0,
             visual_type ENUM("css_slime", "image") NOT NULL DEFAULT "css_slime",
             image_path VARCHAR(255) NULL,
@@ -104,6 +105,7 @@ function migrate(PDO $pdo): void
     ensure_column($pdo, 'shop_items', 'stat_defense', 'ALTER TABLE shop_items ADD stat_defense INT NOT NULL DEFAULT 0 AFTER stat_attack');
     ensure_column($pdo, 'shop_items', 'stat_jump', 'ALTER TABLE shop_items ADD stat_jump INT NOT NULL DEFAULT 0 AFTER stat_defense');
     ensure_column($pdo, 'shop_items', 'power_effect', 'ALTER TABLE shop_items ADD power_effect VARCHAR(120) NOT NULL DEFAULT "" AFTER stat_jump');
+    ensure_column($pdo, 'shop_items', 'effect_duration_seconds', 'ALTER TABLE shop_items ADD effect_duration_seconds INT UNSIGNED NOT NULL DEFAULT 300 AFTER power_effect');
     ensure_column($pdo, 'shop_items', 'stackable', 'ALTER TABLE shop_items ADD stackable TINYINT(1) NOT NULL DEFAULT 0 AFTER power_effect');
     ensure_column($pdo, 'shop_items', 'image_path', 'ALTER TABLE shop_items ADD image_path VARCHAR(255) NULL AFTER visual_type');
     ensure_column($pdo, 'shop_items', 'animation_style', 'ALTER TABLE shop_items ADD animation_style VARCHAR(40) NOT NULL DEFAULT "float" AFTER image_path');
@@ -132,12 +134,14 @@ function migrate(PDO $pdo): void
             user_id INT UNSIGNED NOT NULL,
             item_id INT UNSIGNED NOT NULL,
             stacks INT UNSIGNED NOT NULL DEFAULT 0,
+            expires_at DATETIME NOT NULL,
             updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, item_id),
             CONSTRAINT fk_effects_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             CONSTRAINT fk_effects_item FOREIGN KEY (item_id) REFERENCES shop_items(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
     );
+    ensure_column($pdo, 'player_effects', 'expires_at', 'ALTER TABLE player_effects ADD expires_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER stacks');
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS achievements (
@@ -178,33 +182,33 @@ function migrate(PDO $pdo): void
 function seed_game_content(PDO $pdo): void
 {
     $items = [
-        ['nebula-green', 'Nebula Green', 'skin', 'skins', 'common', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 0, null],
-        ['meteor-pink', 'Meteor Pink', 'skin', 'skins', 'rare', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 0, null],
-        ['solar-gold', 'Solar Gold', 'skin', 'limited', 'legendary', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 15, date('Y-m-d H:i:s', strtotime('+2 days'))],
-        ['void-cyan', 'Void Cyan', 'skin', 'seasonal', 'epic', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 0, null],
-        ['comet-slinger', 'Comet Slinger', 'offense', 'boosts', 'rare', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 0, 'Unlocks ranged slime shots.', 0, 'image', 'assets/images/items/comet-slinger.svg', 'pulse', 0, null],
-        ['moon-fang-knife', 'Moon Fang Knife', 'offense', 'boosts', 'rare', 'A close-range crescent blade for slicing galaxy monsters.', 135, 0, 'cyan', 12, 0, 0, 'Melee slash attack.', 0, 'image', 'assets/images/items/moon-fang-knife.svg', 'pulse', 0, null],
-        ['star-guard-shell', 'Star Guard Shell', 'defense', 'boosts', 'epic', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 0, 'Reduces incoming damage.', 0, 'image', 'assets/images/items/star-guard-shell.svg', 'float', 10, null],
-        ['gravity-boots', 'Gravity Boots', 'tool', 'bundles', 'mythic', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 2, 'Improves parkour control.', 0, 'image', 'assets/images/items/gravity-boots.svg', 'bounce', 0, date('Y-m-d H:i:s', strtotime('+5 days'))],
-        ['jump-boost-shoes', 'Jump Boost Shoes', 'tool', 'boosts', 'rare', 'Springy moon shoes that boost jump height.', 130, 0, 'green', 0, 2, 4, 'Higher jump power.', 0, 'image', 'assets/images/items/jump-boost-shoes.svg', 'bounce', 0, null],
-        ['nebula-wings', 'Nebula Wings', 'wings', 'boosts', 'epic', 'Lightweight galaxy wings that lift slime jumps.', 190, 1, 'cyan', 3, 2, 5, 'Adds jump lift and aerial attack force.', 0, 'image', 'assets/images/items/nebula-wings.svg', 'float', 0, null],
-        ['mint-burst-potion', 'Mint Burst Potion', 'potion', 'boosts', 'common', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 2, 0, 2, 'Stackable speed and jump boost.', 1, 'image', 'assets/images/items/mint-burst-potion.svg', 'pulse', 0, null],
+        ['nebula-green', 'Nebula Green', 'skin', 'skins', 'common', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', null, 'float', 0, null],
+        ['meteor-pink', 'Meteor Pink', 'skin', 'skins', 'rare', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', null, 'float', 0, null],
+        ['solar-gold', 'Solar Gold', 'skin', 'limited', 'legendary', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', null, 'float', 15, date('Y-m-d H:i:s', strtotime('+2 days'))],
+        ['void-cyan', 'Void Cyan', 'skin', 'seasonal', 'epic', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 0, 'Cosmetic slime body.', 0, 0, 'css_slime', null, 'float', 0, null],
+        ['comet-slinger', 'Comet Slinger', 'offense', 'boosts', 'rare', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 0, 'Unlocks ranged slime shots.', 0, 0, 'image', 'assets/images/items/comet-slinger.svg', 'pulse', 0, null],
+        ['moon-fang-knife', 'Moon Fang Knife', 'offense', 'boosts', 'rare', 'A close-range crescent blade for slicing galaxy monsters.', 135, 0, 'cyan', 12, 0, 0, 'Melee slash attack.', 0, 0, 'image', 'assets/images/items/moon-fang-knife.svg', 'pulse', 0, null],
+        ['star-guard-shell', 'Star Guard Shell', 'defense', 'boosts', 'epic', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 0, 'Reduces incoming damage.', 0, 0, 'image', 'assets/images/items/star-guard-shell.svg', 'float', 10, null],
+        ['gravity-boots', 'Gravity Boots', 'tool', 'bundles', 'mythic', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 2, 'Improves parkour control.', 0, 0, 'image', 'assets/images/items/gravity-boots.svg', 'bounce', 0, date('Y-m-d H:i:s', strtotime('+5 days'))],
+        ['jump-boost-shoes', 'Jump Boost Shoes', 'tool', 'boosts', 'rare', 'Springy moon shoes that boost jump height.', 130, 0, 'green', 0, 2, 4, 'Higher jump power.', 0, 0, 'image', 'assets/images/items/jump-boost-shoes.svg', 'bounce', 0, null],
+        ['nebula-wings', 'Nebula Wings', 'wings', 'boosts', 'epic', 'Lightweight galaxy wings that lift slime jumps.', 190, 1, 'cyan', 3, 2, 5, 'Adds jump lift and aerial attack force.', 0, 0, 'image', 'assets/images/items/nebula-wings.svg', 'float', 0, null],
+        ['mint-burst-potion', 'Mint Burst Potion', 'potion', 'boosts', 'common', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 2, 0, 2, 'Stackable speed and jump boost.', 1, 300, 'image', 'assets/images/items/mint-burst-potion.svg', 'pulse', 0, null],
     ];
     $itemStmt = $pdo->prepare(
         'INSERT IGNORE INTO shop_items
-            (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, stat_jump, power_effect, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, stat_jump, power_effect, stackable, effect_duration_seconds, visual_type, image_path, animation_style, sale_percent, limited_until)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     foreach ($items as $item) {
         $itemStmt->execute($item);
     }
     $updateStmt = $pdo->prepare(
         'UPDATE shop_items
-         SET category = ?, rarity = ?, stat_attack = ?, stat_defense = ?, stat_jump = ?, power_effect = ?, stackable = ?, visual_type = ?, image_path = ?, animation_style = ?, sale_percent = ?, limited_until = ?
+         SET category = ?, rarity = ?, stat_attack = ?, stat_defense = ?, stat_jump = ?, power_effect = ?, stackable = ?, effect_duration_seconds = ?, visual_type = ?, image_path = ?, animation_style = ?, sale_percent = ?, limited_until = ?
          WHERE slug = ?'
     );
     foreach ($items as $item) {
-        $updateStmt->execute([$item[3], $item[4], $item[9], $item[10], $item[11], $item[12], $item[13], $item[14], $item[15], $item[16], $item[17], $item[18], $item[0]]);
+        $updateStmt->execute([$item[3], $item[4], $item[9], $item[10], $item[11], $item[12], $item[13], $item[14], $item[15], $item[16], $item[17], $item[18], $item[19], $item[0]]);
     }
 
     $achievements = [
@@ -473,7 +477,7 @@ function get_shop_items(): array
 {
     $stmt = db()->query(
         'SELECT id, slug, name, item_type, category, rarity, description, price_coins, price_gems, tone,
-                stat_attack, stat_defense, stat_jump, power_effect, stackable,
+                stat_attack, stat_defense, stat_jump, power_effect, stackable, effect_duration_seconds,
                 visual_type, image_path, animation_style, sale_percent, limited_until
          FROM shop_items
          WHERE is_active = 1
@@ -488,7 +492,7 @@ function get_player_inventory(int $userId): array
     ensure_starter_inventory($pdo, $userId);
     $stmt = $pdo->prepare(
         'SELECT si.id, si.slug, si.name, si.item_type, si.category, si.rarity, si.description, si.tone,
-                si.stat_attack, si.stat_defense, si.stat_jump, si.power_effect, si.stackable,
+                si.stat_attack, si.stat_defense, si.stat_jump, si.power_effect, si.stackable, si.effect_duration_seconds,
                 si.visual_type, si.image_path, si.animation_style, si.sale_percent, si.limited_until,
                 pi.quantity, pi.equipped, pi.equipped_slot, pi.acquired_at
          FROM player_inventory pi
@@ -673,10 +677,13 @@ function use_potion_item(int $userId, int $itemId): void
             ':item_id' => $itemId,
         ]);
 
+        $duration = max(10, min(86400, (int) ($item['effect_duration_seconds'] ?? 300)));
         $pdo->prepare(
-            'INSERT INTO player_effects (user_id, item_id, stacks)
-             VALUES (:user_id, :item_id, 1)
-             ON DUPLICATE KEY UPDATE stacks = stacks + 1'
+            'INSERT INTO player_effects (user_id, item_id, stacks, expires_at)
+             VALUES (:user_id, :item_id, 1, DATE_ADD(NOW(), INTERVAL ' . $duration . ' SECOND))
+             ON DUPLICATE KEY UPDATE
+                stacks = stacks + 1,
+                expires_at = DATE_ADD(GREATEST(expires_at, NOW()), INTERVAL ' . $duration . ' SECOND)'
         )->execute([
             ':user_id' => $userId,
             ':item_id' => $itemId,
@@ -692,12 +699,18 @@ function use_potion_item(int $userId, int $itemId): void
 
 function active_effects(int $userId): array
 {
-    $stmt = db()->prepare(
+    $pdo = db();
+    $pdo->prepare('DELETE FROM player_effects WHERE user_id = :user_id AND expires_at <= NOW()')
+        ->execute([':user_id' => $userId]);
+
+    $stmt = $pdo->prepare(
         'SELECT si.id, si.slug, si.name, si.stat_attack, si.stat_defense, si.stat_jump,
-                si.power_effect, pe.stacks, pe.updated_at
+                si.power_effect, si.effect_duration_seconds, pe.stacks, pe.expires_at,
+                GREATEST(0, TIMESTAMPDIFF(SECOND, NOW(), pe.expires_at)) AS seconds_remaining,
+                pe.updated_at
          FROM player_effects pe
          INNER JOIN shop_items si ON si.id = pe.item_id
-         WHERE pe.user_id = :user_id AND pe.stacks > 0
+         WHERE pe.user_id = :user_id AND pe.stacks > 0 AND pe.expires_at > NOW()
          ORDER BY pe.updated_at DESC'
     );
     $stmt->execute([':user_id' => $userId]);

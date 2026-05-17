@@ -58,20 +58,32 @@ $earnedAchievements = count($save['achievements']);
     <div class="ring ring-one"></div>
     <div class="ring ring-two"></div>
     <div class="ring ring-three"></div>
-    <?php if (($equippedSkin['visual_type'] ?? '') === 'image' && !empty($equippedSkin['image_path'])): ?>
-      <div class="slime-asset loadout-asset <?php echo htmlspecialchars($equippedSkin['animation_style']); ?>">
-        <img src="<?php echo htmlspecialchars($equippedSkin['image_path']); ?>" alt="<?php echo htmlspecialchars($equippedSkin['name']); ?>">
-      </div>
-    <?php else: ?>
-      <div class="hero-slime character-slime <?php echo htmlspecialchars($equippedSkin['tone'] ?? 'green'); ?>" aria-hidden="true">
-        <span class="eye eye-left"></span>
-        <span class="eye eye-right"></span>
-        <span class="smile"></span>
-      </div>
-    <?php endif; ?>
-    <?php if (!empty($loadout['wings'])): ?><div class="slime-wings-attachment" aria-hidden="true"></div><?php endif; ?>
-    <?php if (!empty($loadout['defense'])): ?><div class="slime-shield-attachment" aria-hidden="true"></div><?php endif; ?>
-    <?php if (!empty($loadout['offense'])): ?><div class="slime-weapon-attachment" aria-hidden="true"></div><?php endif; ?>
+    <div class="slime-loadout-stage">
+      <?php if (!empty($loadout['wings'])): ?>
+        <div class="slime-gear gear-wings" style="background-image: url('<?php echo htmlspecialchars($loadout['wings']['image_path'] ?: 'assets/images/items/nebula-wings.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['wings']['name']); ?>"></div>
+      <?php endif; ?>
+      <?php if (($equippedSkin['visual_type'] ?? '') === 'image' && !empty($equippedSkin['image_path'])): ?>
+        <div class="slime-asset loadout-asset <?php echo htmlspecialchars($equippedSkin['animation_style']); ?>">
+          <img src="<?php echo htmlspecialchars($equippedSkin['image_path']); ?>" alt="<?php echo htmlspecialchars($equippedSkin['name']); ?>">
+        </div>
+      <?php else: ?>
+        <div class="hero-slime character-slime <?php echo htmlspecialchars($equippedSkin['tone'] ?? 'green'); ?>" aria-hidden="true">
+          <span class="eye eye-left"></span>
+          <span class="eye eye-right"></span>
+          <span class="smile"></span>
+        </div>
+      <?php endif; ?>
+      <?php if (!empty($loadout['tool'])): ?>
+        <div class="slime-gear gear-shoe gear-shoe-left" style="background-image: url('<?php echo htmlspecialchars($loadout['tool']['image_path'] ?: 'assets/images/items/jump-boost-shoes.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['tool']['name']); ?>"></div>
+        <div class="slime-gear gear-shoe gear-shoe-right" style="background-image: url('<?php echo htmlspecialchars($loadout['tool']['image_path'] ?: 'assets/images/items/jump-boost-shoes.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['tool']['name']); ?>"></div>
+      <?php endif; ?>
+      <?php if (!empty($loadout['defense'])): ?>
+        <div class="slime-gear gear-shield" style="background-image: url('<?php echo htmlspecialchars($loadout['defense']['image_path'] ?: 'assets/images/items/star-guard-shell.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['defense']['name']); ?>"></div>
+      <?php endif; ?>
+      <?php if (!empty($loadout['offense'])): ?>
+        <div class="slime-gear gear-weapon" style="background-image: url('<?php echo htmlspecialchars($loadout['offense']['image_path'] ?: 'assets/images/items/moon-fang-knife.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['offense']['name']); ?>"></div>
+      <?php endif; ?>
+    </div>
     <div class="stage-caption">
       <p class="kicker">Active slime</p>
       <h1><?php echo htmlspecialchars($equippedSkin['name'] ?? 'Nebula Green'); ?></h1>
@@ -105,8 +117,9 @@ $earnedAchievements = count($save['achievements']);
       <strong>ATK <?php echo (int) $stats['attack']; ?> / DEF <?php echo (int) $stats['defense']; ?> / JMP +<?php echo (int) $stats['jump']; ?></strong>
       <p>Offense: <?php echo htmlspecialchars($loadout['offense']['name'] ?? 'Empty'); ?></p>
       <p>Defense: <?php echo htmlspecialchars($loadout['defense']['name'] ?? 'Empty'); ?></p>
+      <p>Shoes/Tool: <?php echo htmlspecialchars($loadout['tool']['name'] ?? 'Empty'); ?></p>
       <p>Wings: <?php echo htmlspecialchars($loadout['wings']['name'] ?? 'Empty'); ?></p>
-      <?php foreach ($effects as $effect): ?><small><?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?></small><?php endforeach; ?>
+      <?php foreach ($effects as $effect): ?><small><?php echo htmlspecialchars($effect['name']); ?> x<?php echo (int) $effect['stacks']; ?> - <?php echo (int) $effect['seconds_remaining']; ?>s left</small><?php endforeach; ?>
     </div>
     <div class="rail-grid">
       <a class="activity-card compact-card" href="shop.php"><strong>Shop</strong><span>New skins</span></a>

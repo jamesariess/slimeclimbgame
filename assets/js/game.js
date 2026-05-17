@@ -14,6 +14,7 @@ const save = {
 };
 const loadout = window.SLIME_LOADOUT || {};
 const activeEffects = window.SLIME_EFFECTS || [];
+const baseStats = window.SLIME_BASE_STATS || {};
 const serverStats = window.SLIME_STATS || {};
 const equippedSkin = loadout.skin || {};
 const slimePalette = {
@@ -22,10 +23,11 @@ const slimePalette = {
   pink: "#ff5fc8",
   gold: "#ffd166",
 };
-const equipmentStats = {
-  attack: Number(serverStats.attack || 4),
-  defense: Number(serverStats.defense || 0),
-  jumpBoost: Number(serverStats.jump || 0),
+const effectStartedAt = performance.now();
+let equipmentStats = {
+  attack: Number(serverStats.attack || baseStats.attack || 4),
+  defense: Number(serverStats.defense || baseStats.defense || 0),
+  jumpBoost: Number(serverStats.jump || baseStats.jump || 0),
 };
 let skinImage = null;
 if (equippedSkin.visual_type === "image" && equippedSkin.image_path) {
@@ -126,6 +128,28 @@ document.querySelectorAll("[data-control]").forEach((button) => {
 
 let jumpWasPressed = false;
 
+function refreshTimedEffects() {
+  const elapsedSeconds = Math.floor((performance.now() - effectStartedAt) / 1000);
+  const nextStats = {
+    attack: Number(baseStats.attack || 4),
+    defense: Number(baseStats.defense || 0),
+    jumpBoost: Number(baseStats.jump || 0),
+  };
+  for (const effect of activeEffects) {
+    const remaining = Number(effect.seconds_remaining || 0) - elapsedSeconds;
+    if (remaining <= 0) continue;
+    const stacks = Math.max(1, Number(effect.stacks || 1));
+    nextStats.attack += Number(effect.stat_attack || 0) * stacks;
+    nextStats.defense += Number(effect.stat_defense || 0) * stacks;
+    nextStats.jumpBoost += Number(effect.stat_jump || 0) * stacks;
+  }
+  equipmentStats = nextStats;
+  const atk = document.getElementById("hudAtk");
+  const def = document.getElementById("hudDef");
+  if (atk) atk.textContent = String(equipmentStats.attack);
+  if (def) def.textContent = String(equipmentStats.defense);
+}
+
 function jump() {
   if (player.grounded || player.jumps < 2) {
     player.vy = -(15 + equipmentStats.jumpBoost) * player.gravitySign;
@@ -195,6 +219,7 @@ async function collectItems() {
 }
 
 function update() {
+  refreshTimedEffects();
   const left = pressed("arrowleft") || pressed("a") || pressed("left");
   const right = pressed("arrowright") || pressed("d") || pressed("right");
   const wantsJump = pressed("arrowup") || pressed("w") || pressed(" ") || pressed("jump");
@@ -437,6 +462,19 @@ function drawEquippedAttachments(layer) {
     ctx.beginPath();
     ctx.arc(0, 0, 34, -0.5, Math.PI * 1.15);
     ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+  if (layer > 0 && loadout.tool) {
+    ctx.fillStyle = "#67ff93";
+    ctx.shadowColor = "#67ff93";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.ellipse(-13, 18, 11, 5, -0.15, 0, Math.PI * 2);
+    ctx.ellipse(13, 18, 11, 5, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#07111c";
+    ctx.fillRect(-23, 20, 20, 4);
+    ctx.fillRect(3, 20, 20, 4);
     ctx.shadowBlur = 0;
   }
   if (layer > 0 && loadout.offense) {

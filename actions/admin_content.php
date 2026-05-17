@@ -48,9 +48,9 @@ try {
 
         $stmt = db()->prepare(
             'INSERT INTO shop_items
-                (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, stat_jump, power_effect, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
+                (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, stat_jump, power_effect, effect_duration_seconds, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
              VALUES
-                (:slug, :name, :item_type, :category, :rarity, :description, :price_coins, :price_gems, :tone, :stat_attack, :stat_defense, :stat_jump, :power_effect, :stackable, :visual_type, :image_path, :animation_style, :sale_percent, :limited_until)
+                (:slug, :name, :item_type, :category, :rarity, :description, :price_coins, :price_gems, :tone, :stat_attack, :stat_defense, :stat_jump, :power_effect, :effect_duration_seconds, :stackable, :visual_type, :image_path, :animation_style, :sale_percent, :limited_until)
              ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
                 item_type = VALUES(item_type),
@@ -64,6 +64,7 @@ try {
                 stat_defense = VALUES(stat_defense),
                 stat_jump = VALUES(stat_jump),
                 power_effect = VALUES(power_effect),
+                effect_duration_seconds = VALUES(effect_duration_seconds),
                 stackable = VALUES(stackable),
                 visual_type = VALUES(visual_type),
                 image_path = VALUES(image_path),
@@ -86,6 +87,7 @@ try {
             ':stat_defense' => max(0, (int) ($_POST['stat_defense'] ?? 0)),
             ':stat_jump' => max(0, (int) ($_POST['stat_jump'] ?? 0)),
             ':power_effect' => substr((string) ($_POST['power_effect'] ?? ''), 0, 120),
+            ':effect_duration_seconds' => min(86400, max(0, (int) ($_POST['effect_duration_seconds'] ?? 0))),
             ':stackable' => !empty($_POST['stackable']) ? 1 : 0,
             ':visual_type' => $visualType,
             ':image_path' => $imagePath !== '' ? $imagePath : null,
