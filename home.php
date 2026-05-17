@@ -47,11 +47,9 @@ $earnedAchievements = count($save['achievements']);
       <strong>Collect 25 comet coins</strong>
       <small>Reward: 50 coins + streak charge</small>
     </div>
-      
   </section>
 
   <section class="character-stage cinematic-stage">
-
     <div class="stage-light stage-light-a"></div>
     <div class="stage-light stage-light-b"></div>
     <div class="orbit-particles" aria-hidden="true">
@@ -61,7 +59,6 @@ $earnedAchievements = count($save['achievements']);
     <div class="ring ring-two"></div>
     <div class="ring ring-three"></div>
     <div class="slime-loadout-stage">
-         
       <?php if (!empty($loadout['wings'])): ?>
         <div class="slime-gear gear-wings" style="background-image: url('<?php echo htmlspecialchars($loadout['wings']['image_path'] ?: 'assets/images/items/nebula-wings.svg'); ?>')" aria-label="<?php echo htmlspecialchars($loadout['wings']['name']); ?>"></div>
       <?php endif; ?>
