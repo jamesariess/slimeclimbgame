@@ -2,6 +2,7 @@
 require __DIR__ . '/api/config.php';
 $user = require_login();
 $save = load_player_save((int) $user['id']);
+$loadout = equipped_loadout((int) $user['id']);
 $pageTitle = 'Play - Slime Climb Galaxy';
 $bodyClass = 'game-page';
 require __DIR__ . '/partials/head.php';
@@ -21,6 +22,7 @@ require __DIR__ . '/partials/head.php';
 </div>
 <script>
   window.SLIME_SAVE = <?php echo json_encode($save); ?>;
+  window.SLIME_LOADOUT = <?php echo json_encode($loadout); ?>;
   window.CSRF_TOKEN = <?php echo json_encode(csrf_token()); ?>;
 </script>
 <script src="assets/js/game.js"></script>

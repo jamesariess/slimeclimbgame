@@ -2,6 +2,8 @@
 require __DIR__ . '/api/config.php';
 $user = require_login();
 $save = load_player_save((int) $user['id']);
+$loadout = equipped_loadout((int) $user['id']);
+$equippedSkin = $loadout['skin'] ?? null;
 $pageTitle = 'Character Hub - Slime Climb Galaxy';
 $bodyClass = 'hub-page';
 require __DIR__ . '/partials/head.php';
@@ -54,14 +56,20 @@ $earnedAchievements = count($save['achievements']);
     <div class="ring ring-one"></div>
     <div class="ring ring-two"></div>
     <div class="ring ring-three"></div>
-    <div class="hero-slime character-slime" aria-hidden="true">
-      <span class="eye eye-left"></span>
-      <span class="eye eye-right"></span>
-      <span class="smile"></span>
-    </div>
+    <?php if (($equippedSkin['visual_type'] ?? '') === 'image' && !empty($equippedSkin['image_path'])): ?>
+      <div class="slime-asset loadout-asset <?php echo htmlspecialchars($equippedSkin['animation_style']); ?>">
+        <img src="<?php echo htmlspecialchars($equippedSkin['image_path']); ?>" alt="<?php echo htmlspecialchars($equippedSkin['name']); ?>">
+      </div>
+    <?php else: ?>
+      <div class="hero-slime character-slime <?php echo htmlspecialchars($equippedSkin['tone'] ?? 'green'); ?>" aria-hidden="true">
+        <span class="eye eye-left"></span>
+        <span class="eye eye-right"></span>
+        <span class="smile"></span>
+      </div>
+    <?php endif; ?>
     <div class="stage-caption">
       <p class="kicker">Active slime</p>
-      <h1>Nebula Green</h1>
+      <h1><?php echo htmlspecialchars($equippedSkin['name'] ?? 'Nebula Green'); ?></h1>
       <p>Gravity-ready climber tuned for <?php echo $currentCheckpoint; ?>.</p>
     </div>
     <a class="button primary play-now premium-play" href="game.php">

@@ -35,15 +35,27 @@ try {
         if (!in_array($animationStyle, ['float', 'bounce', 'pulse'], true)) {
             $animationStyle = 'float';
         }
+        $category = (string) ($_POST['category'] ?? 'skins');
+        if (!in_array($category, ['skins', 'boosts', 'trails', 'bundles', 'limited', 'seasonal'], true)) {
+            $category = 'skins';
+        }
+        $rarity = (string) ($_POST['rarity'] ?? 'common');
+        if (!in_array($rarity, ['common', 'rare', 'epic', 'legendary', 'mythic'], true)) {
+            $rarity = 'common';
+        }
+        $limitedUntil = trim((string) ($_POST['limited_until'] ?? ''));
+        $limitedUntil = $limitedUntil !== '' ? str_replace('T', ' ', $limitedUntil) . ':00' : null;
 
         $stmt = db()->prepare(
             'INSERT INTO shop_items
-                (slug, name, item_type, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style)
+                (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
              VALUES
-                (:slug, :name, :item_type, :description, :price_coins, :price_gems, :tone, :stat_attack, :stat_defense, :power_effect, :stackable, :visual_type, :image_path, :animation_style)
+                (:slug, :name, :item_type, :category, :rarity, :description, :price_coins, :price_gems, :tone, :stat_attack, :stat_defense, :power_effect, :stackable, :visual_type, :image_path, :animation_style, :sale_percent, :limited_until)
              ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
                 item_type = VALUES(item_type),
+                category = VALUES(category),
+                rarity = VALUES(rarity),
                 description = VALUES(description),
                 price_coins = VALUES(price_coins),
                 price_gems = VALUES(price_gems),
@@ -55,12 +67,16 @@ try {
                 visual_type = VALUES(visual_type),
                 image_path = VALUES(image_path),
                 animation_style = VALUES(animation_style),
+                sale_percent = VALUES(sale_percent),
+                limited_until = VALUES(limited_until),
                 is_active = 1'
         );
         $stmt->execute([
             ':slug' => $slug,
             ':name' => $name,
             ':item_type' => substr((string) ($_POST['item_type'] ?? 'skin'), 0, 30),
+            ':category' => $category,
+            ':rarity' => $rarity,
             ':description' => substr($description, 0, 255),
             ':price_coins' => max(0, (int) ($_POST['price_coins'] ?? 0)),
             ':price_gems' => max(0, (int) ($_POST['price_gems'] ?? 0)),
@@ -72,6 +88,8 @@ try {
             ':visual_type' => $visualType,
             ':image_path' => $imagePath !== '' ? $imagePath : null,
             ':animation_style' => $animationStyle,
+            ':sale_percent' => min(90, max(0, (int) ($_POST['sale_percent'] ?? 0))),
+            ':limited_until' => $limitedUntil,
         ]);
         $_SESSION['flash_success'] = 'Shop item saved.';
     } elseif ($type === 'achievement') {

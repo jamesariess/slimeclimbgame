@@ -77,6 +77,8 @@ function migrate(PDO $pdo): void
             slug VARCHAR(60) NOT NULL UNIQUE,
             name VARCHAR(80) NOT NULL,
             item_type VARCHAR(30) NOT NULL DEFAULT "skin",
+            category VARCHAR(40) NOT NULL DEFAULT "skins",
+            rarity ENUM("common", "rare", "epic", "legendary", "mythic") NOT NULL DEFAULT "common",
             description VARCHAR(255) NOT NULL DEFAULT "",
             price_coins INT UNSIGNED NOT NULL DEFAULT 0,
             price_gems INT UNSIGNED NOT NULL DEFAULT 0,
@@ -88,17 +90,23 @@ function migrate(PDO $pdo): void
             visual_type ENUM("css_slime", "image") NOT NULL DEFAULT "css_slime",
             image_path VARCHAR(255) NULL,
             animation_style VARCHAR(40) NOT NULL DEFAULT "float",
+            sale_percent INT UNSIGNED NOT NULL DEFAULT 0,
+            limited_until DATETIME NULL,
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
     );
     ensure_column($pdo, 'shop_items', 'visual_type', 'ALTER TABLE shop_items ADD visual_type ENUM("css_slime", "image") NOT NULL DEFAULT "css_slime" AFTER tone');
+    ensure_column($pdo, 'shop_items', 'category', 'ALTER TABLE shop_items ADD category VARCHAR(40) NOT NULL DEFAULT "skins" AFTER item_type');
+    ensure_column($pdo, 'shop_items', 'rarity', 'ALTER TABLE shop_items ADD rarity ENUM("common", "rare", "epic", "legendary", "mythic") NOT NULL DEFAULT "common" AFTER category');
     ensure_column($pdo, 'shop_items', 'stat_attack', 'ALTER TABLE shop_items ADD stat_attack INT NOT NULL DEFAULT 0 AFTER tone');
     ensure_column($pdo, 'shop_items', 'stat_defense', 'ALTER TABLE shop_items ADD stat_defense INT NOT NULL DEFAULT 0 AFTER stat_attack');
     ensure_column($pdo, 'shop_items', 'power_effect', 'ALTER TABLE shop_items ADD power_effect VARCHAR(120) NOT NULL DEFAULT "" AFTER stat_defense');
     ensure_column($pdo, 'shop_items', 'stackable', 'ALTER TABLE shop_items ADD stackable TINYINT(1) NOT NULL DEFAULT 0 AFTER power_effect');
     ensure_column($pdo, 'shop_items', 'image_path', 'ALTER TABLE shop_items ADD image_path VARCHAR(255) NULL AFTER visual_type');
     ensure_column($pdo, 'shop_items', 'animation_style', 'ALTER TABLE shop_items ADD animation_style VARCHAR(40) NOT NULL DEFAULT "float" AFTER image_path');
+    ensure_column($pdo, 'shop_items', 'sale_percent', 'ALTER TABLE shop_items ADD sale_percent INT UNSIGNED NOT NULL DEFAULT 0 AFTER animation_style');
+    ensure_column($pdo, 'shop_items', 'limited_until', 'ALTER TABLE shop_items ADD limited_until DATETIME NULL AFTER sale_percent');
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS player_inventory (
@@ -156,22 +164,30 @@ function migrate(PDO $pdo): void
 function seed_game_content(PDO $pdo): void
 {
     $items = [
-        ['nebula-green', 'Nebula Green', 'skin', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
-        ['meteor-pink', 'Meteor Pink', 'skin', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
-        ['solar-gold', 'Solar Gold', 'skin', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
-        ['void-cyan', 'Void Cyan', 'skin', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float'],
-        ['comet-slinger', 'Comet Slinger', 'offense', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 'Unlocks ranged slime shots.', 0, 'css_slime', null, 'pulse'],
-        ['star-guard-shell', 'Star Guard Shell', 'defense', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 'Reduces incoming damage.', 0, 'css_slime', null, 'float'],
-        ['gravity-boots', 'Gravity Boots', 'tool', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 'Improves parkour control.', 0, 'css_slime', null, 'bounce'],
-        ['mint-burst-potion', 'Mint Burst Potion', 'potion', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 0, 0, 'Consumable speed boost.', 1, 'css_slime', null, 'pulse'],
+        ['nebula-green', 'Nebula Green', 'skin', 'skins', 'common', 'Starter slime skin with a soft galaxy glow.', 0, 0, 'green', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 0, null],
+        ['meteor-pink', 'Meteor Pink', 'skin', 'skins', 'rare', 'Bright pink slime skin for comet races.', 120, 0, 'pink', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 0, null],
+        ['solar-gold', 'Solar Gold', 'skin', 'limited', 'legendary', 'Golden slime skin for high-score climbers.', 180, 0, 'gold', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 15, date('Y-m-d H:i:s', strtotime('+2 days'))],
+        ['void-cyan', 'Void Cyan', 'skin', 'seasonal', 'epic', 'Cool cyan slime skin from the deep nebula.', 240, 0, 'cyan', 0, 0, 'Cosmetic slime body.', 0, 'css_slime', null, 'float', 0, null],
+        ['comet-slinger', 'Comet Slinger', 'offense', 'boosts', 'rare', 'Throw charged comet blobs at alien hazards.', 160, 0, 'cyan', 8, 0, 'Unlocks ranged slime shots.', 0, 'css_slime', null, 'pulse', 0, null],
+        ['star-guard-shell', 'Star Guard Shell', 'defense', 'boosts', 'epic', 'A soft orbit shield that cushions enemy hits.', 150, 0, 'gold', 0, 10, 'Reduces incoming damage.', 0, 'css_slime', null, 'float', 10, null],
+        ['gravity-boots', 'Gravity Boots', 'tool', 'bundles', 'mythic', 'Stabilizes wall climbs and gravity switches.', 210, 1, 'pink', 3, 4, 'Improves parkour control.', 0, 'css_slime', null, 'bounce', 0, date('Y-m-d H:i:s', strtotime('+5 days'))],
+        ['mint-burst-potion', 'Mint Burst Potion', 'potion', 'boosts', 'common', 'Temporary jump and speed boost for one climb.', 45, 0, 'green', 0, 0, 'Consumable speed boost.', 1, 'css_slime', null, 'pulse', 0, null],
     ];
     $itemStmt = $pdo->prepare(
         'INSERT IGNORE INTO shop_items
-            (slug, name, item_type, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (slug, name, item_type, category, rarity, description, price_coins, price_gems, tone, stat_attack, stat_defense, power_effect, stackable, visual_type, image_path, animation_style, sale_percent, limited_until)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     foreach ($items as $item) {
         $itemStmt->execute($item);
+    }
+    $updateStmt = $pdo->prepare(
+        'UPDATE shop_items
+         SET category = ?, rarity = ?, stat_attack = ?, stat_defense = ?, power_effect = ?, stackable = ?, animation_style = ?, sale_percent = ?, limited_until = ?
+         WHERE slug = ?'
+    );
+    foreach ($items as $item) {
+        $updateStmt->execute([$item[3], $item[4], $item[9], $item[10], $item[11], $item[12], $item[15], $item[16], $item[17], $item[0]]);
     }
 
     $achievements = [
@@ -439,12 +455,12 @@ function ensure_starter_inventory(PDO $pdo, int $userId): void
 function get_shop_items(): array
 {
     $stmt = db()->query(
-        'SELECT id, slug, name, item_type, description, price_coins, price_gems, tone,
+        'SELECT id, slug, name, item_type, category, rarity, description, price_coins, price_gems, tone,
                 stat_attack, stat_defense, power_effect, stackable,
-                visual_type, image_path, animation_style
+                visual_type, image_path, animation_style, sale_percent, limited_until
          FROM shop_items
          WHERE is_active = 1
-         ORDER BY price_coins, id'
+         ORDER BY FIELD(rarity, "mythic", "legendary", "epic", "rare", "common"), price_coins, id'
     );
     return $stmt->fetchAll();
 }
@@ -454,9 +470,9 @@ function get_player_inventory(int $userId): array
     $pdo = db();
     ensure_starter_inventory($pdo, $userId);
     $stmt = $pdo->prepare(
-        'SELECT si.id, si.slug, si.name, si.item_type, si.description, si.tone,
+        'SELECT si.id, si.slug, si.name, si.item_type, si.category, si.rarity, si.description, si.tone,
                 si.stat_attack, si.stat_defense, si.power_effect, si.stackable,
-                si.visual_type, si.image_path, si.animation_style,
+                si.visual_type, si.image_path, si.animation_style, si.sale_percent, si.limited_until,
                 pi.quantity, pi.equipped, pi.equipped_slot, pi.acquired_at
          FROM player_inventory pi
          INNER JOIN shop_items si ON si.id = pi.item_id
@@ -505,7 +521,8 @@ function buy_shop_item(int $userId, int $itemId): void
             $save = $saveStmt->fetch();
         }
 
-        if ((int) $save['coins'] < (int) $item['price_coins'] || (int) $save['gems'] < (int) $item['price_gems']) {
+        $coinCost = effective_coin_price($item);
+        if ((int) $save['coins'] < $coinCost || (int) $save['gems'] < (int) $item['price_gems']) {
             throw new RuntimeException('Not enough coins or gems.');
         }
 
@@ -519,7 +536,7 @@ function buy_shop_item(int $userId, int $itemId): void
              SET coins = coins - :coins, gems = gems - :gems
              WHERE user_id = :user_id'
         )->execute([
-            ':coins' => (int) $item['price_coins'],
+            ':coins' => $coinCost,
             ':gems' => (int) $item['price_gems'],
             ':user_id' => $userId,
         ]);
@@ -540,6 +557,16 @@ function buy_shop_item(int $userId, int $itemId): void
         }
         throw $error;
     }
+}
+
+function effective_coin_price(array $item): int
+{
+    $price = max(0, (int) ($item['price_coins'] ?? 0));
+    $sale = min(90, max(0, (int) ($item['sale_percent'] ?? 0)));
+    if ($sale <= 0) {
+        return $price;
+    }
+    return max(0, (int) ceil($price * (100 - $sale) / 100));
 }
 
 function equipment_slot_for_type(string $itemType): ?string

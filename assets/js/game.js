@@ -12,6 +12,19 @@ const save = {
   progress: {},
   ...(window.SLIME_SAVE || {}),
 };
+const loadout = window.SLIME_LOADOUT || {};
+const equippedSkin = loadout.skin || {};
+const slimePalette = {
+  green: "#67ff93",
+  cyan: "#45efff",
+  pink: "#ff5fc8",
+  gold: "#ffd166",
+};
+let skinImage = null;
+if (equippedSkin.visual_type === "image" && equippedSkin.image_path) {
+  skinImage = new Image();
+  skinImage.src = equippedSkin.image_path;
+}
 
 const keys = new Set();
 const touch = new Set();
@@ -256,8 +269,16 @@ function draw() {
 
   ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
   ctx.scale(1, player.gravitySign);
-  ctx.fillStyle = "#67ff93";
-  ctx.shadowColor = "#67ff93";
+  const slimeColor = slimePalette[equippedSkin.tone] || "#67ff93";
+  if (skinImage?.complete && skinImage.naturalWidth > 0) {
+    ctx.shadowColor = slimeColor;
+    ctx.shadowBlur = 24;
+    ctx.drawImage(skinImage, -player.w * 0.8, -player.h * 1.05, player.w * 1.6, player.h * 1.8);
+    ctx.restore();
+    return;
+  }
+  ctx.fillStyle = slimeColor;
+  ctx.shadowColor = slimeColor;
   ctx.shadowBlur = 24;
   ctx.beginPath();
   ctx.ellipse(0, 0, player.w / 2, player.h / 2, 0, 0, Math.PI * 2);

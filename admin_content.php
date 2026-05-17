@@ -29,8 +29,31 @@ require __DIR__ . '/partials/player_nav.php';
       <label><span>Slug</span><input name="slug" placeholder="meteor-pink" required></label>
       <label><span>Description</span><input name="description" required></label>
       <label><span>Type</span><input name="item_type" value="skin" required></label>
+      <label>
+        <span>Category</span>
+        <select name="category">
+          <option value="skins">Skins</option>
+          <option value="boosts">Boosts</option>
+          <option value="trails">Trails</option>
+          <option value="bundles">Bundles</option>
+          <option value="limited">Limited</option>
+          <option value="seasonal">Seasonal</option>
+        </select>
+      </label>
+      <label>
+        <span>Rarity</span>
+        <select name="rarity">
+          <option value="common">Common</option>
+          <option value="rare">Rare</option>
+          <option value="epic">Epic</option>
+          <option value="legendary">Legendary</option>
+          <option value="mythic">Mythic</option>
+        </select>
+      </label>
       <label><span>Coin price</span><input name="price_coins" type="number" min="0" value="0"></label>
       <label><span>Gem price</span><input name="price_gems" type="number" min="0" value="0"></label>
+      <label><span>Sale percent</span><input name="sale_percent" type="number" min="0" max="90" value="0"></label>
+      <label><span>Limited until</span><input name="limited_until" type="datetime-local"></label>
       <label><span>Color tone</span><input name="tone" value="green" required></label>
       <label><span>Attack stat</span><input name="stat_attack" type="number" value="0"></label>
       <label><span>Defense stat</span><input name="stat_defense" type="number" value="0"></label>
