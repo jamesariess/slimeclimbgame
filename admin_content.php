@@ -37,6 +37,7 @@ require __DIR__ . '/partials/player_nav.php';
           <option value="trails">Trails</option>
           <option value="bundles">Bundles</option>
           <option value="limited">Limited</option>
+          <option value="costumes">Costumes</option>
           <option value="seasonal">Seasonal</option>
         </select>
       </label>

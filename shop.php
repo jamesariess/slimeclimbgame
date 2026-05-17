@@ -69,6 +69,7 @@ require __DIR__ . '/partials/player_nav.php';
         'trails' => 'Trails',
         'bundles' => 'Bundles',
         'limited' => 'Limited',
+        'custumes' => 'Costumes',
         'seasonal' => 'Seasonal',
     ] as $category => $label): ?>
       <a class="<?php echo $activeCategory === $category ? 'active' : ''; ?>" href="shop.php?category=<?php echo htmlspecialchars($category); ?>"><?php echo htmlspecialchars($label); ?></a>
