@@ -5,8 +5,11 @@ $save = load_player_save((int) $user['id']);
 $today = date('Y-m-d');
 $claimed = ($save['progress']['lastDailyReward'] ?? '') === $today;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$claimed) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf_from_post();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$claimed) {
     $save['coins'] += 50;
     $save['gems'] += 1;
     $save['progress']['lastDailyReward'] = $today;

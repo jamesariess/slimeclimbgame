@@ -10,8 +10,8 @@
     <a href="inventory.php">Inventory</a>
     <a href="achievements.php">Achievements</a>
     <a href="settings.php">Settings</a>
-    <?php if ($navUser && strtolower($navUser['username']) === 'admin'): ?>
-      <a href="admin_content.php">Admin</a>
+    <?php if (is_admin($navUser)): ?>
+      <a href="admin_panel.php">Admin</a>
     <?php endif; ?>
     <form action="actions/logout.php" method="post">
       <?php echo csrf_field(); ?>

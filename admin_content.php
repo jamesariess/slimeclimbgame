@@ -1,10 +1,6 @@
 <?php
 require __DIR__ . '/api/config.php';
-$user = require_login();
-if (strtolower($user['username']) !== 'admin') {
-    header('Location: menu.php');
-    exit;
-}
+$user = require_admin();
 $items = get_shop_items();
 $achievements = get_achievements((int) $user['id']);
 $message = $_SESSION['flash_success'] ?? '';

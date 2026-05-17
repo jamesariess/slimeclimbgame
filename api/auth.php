@@ -25,17 +25,19 @@ try {
         }
 
         $pdo->beginTransaction();
-        $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:username, :email, :password_hash)');
+        $role = (!admin_exists($pdo) && strtolower($username) === 'admin') ? 'admin' : 'user';
+        $stmt = $pdo->prepare('INSERT INTO users (username, email, role, password_hash) VALUES (:username, :email, :role, :password_hash)');
         $stmt->execute([
             ':username' => $username,
             ':email' => $email,
+            ':role' => $role,
             ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
         ]);
         $userId = (int) $pdo->lastInsertId();
         create_default_save($pdo, $userId);
         $pdo->commit();
 
-        $_SESSION['user'] = ['id' => $userId, 'username' => $username, 'email' => $email];
+        $_SESSION['user'] = ['id' => $userId, 'username' => $username, 'email' => $email, 'role' => $role];
         json_response(['ok' => true, 'user' => $_SESSION['user']]);
     }
 

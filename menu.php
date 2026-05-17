@@ -16,6 +16,9 @@ require __DIR__ . '/partials/head.php';
     <div class="menu-actions">
       <a class="button primary button-xl" href="home.php">Start</a>
       <a class="button secondary button-xl" href="settings.php">Settings</a>
+      <?php if (is_admin($user)): ?>
+        <a class="button secondary button-xl" href="admin_panel.php">Admin Panel</a>
+      <?php endif; ?>
       <form action="actions/logout.php" method="post">
         <?php echo csrf_field(); ?>
         <button class="ghost button-xl" type="submit">Logout</button>

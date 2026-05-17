@@ -46,10 +46,13 @@ function migrate(PDO $pdo): void
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(24) NOT NULL UNIQUE,
             email VARCHAR(120) NOT NULL UNIQUE,
+            role ENUM("user", "admin") NOT NULL DEFAULT "user",
             password_hash VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
     );
+    ensure_column($pdo, 'users', 'role', 'ALTER TABLE users ADD role ENUM("user", "admin") NOT NULL DEFAULT "user" AFTER email');
+    $pdo->exec('UPDATE users SET role = "admin" WHERE username = "admin"');
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS player_saves (
@@ -223,13 +226,31 @@ function public_user(array $user): array
         'id' => (int) $user['id'],
         'username' => $user['username'],
         'email' => $user['email'],
+        'role' => $user['role'] ?? 'user',
     ];
 }
 
 function current_user(): ?array
 {
     start_app_session();
-    return $_SESSION['user'] ?? null;
+    if (empty($_SESSION['user']['id'])) {
+        return null;
+    }
+
+    try {
+        $stmt = db()->prepare('SELECT id, username, email, role FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => (int) $_SESSION['user']['id']]);
+        $user = $stmt->fetch();
+        if (!$user) {
+            $_SESSION = [];
+            return null;
+        }
+        $_SESSION['user'] = public_user($user);
+    } catch (Throwable $error) {
+        return $_SESSION['user'];
+    }
+
+    return $_SESSION['user'];
 }
 
 function require_login(): array
@@ -240,6 +261,74 @@ function require_login(): array
         exit;
     }
     return $user;
+}
+
+function is_admin(?array $user = null): bool
+{
+    $user ??= current_user();
+    return ($user['role'] ?? 'user') === 'admin';
+}
+
+function require_admin(): array
+{
+    $user = require_login();
+    if (!is_admin($user)) {
+        http_response_code(403);
+        require __DIR__ . '/../partials/head.php';
+        echo '<main class="content-wrap"><section class="simple-panel"><p class="kicker">Admin only</p><h1>Access denied</h1><p class="muted">Only admin accounts can view this page.</p><a class="button primary" href="menu.php">Back to Menu</a></section></main>';
+        require __DIR__ . '/../partials/foot.php';
+        exit;
+    }
+    return $user;
+}
+
+function admin_exists(PDO $pdo): bool
+{
+    $stmt = $pdo->query('SELECT COUNT(*) FROM users WHERE role = "admin"');
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+function get_all_users(): array
+{
+    return db()->query(
+        'SELECT u.id, u.username, u.email, u.role, u.created_at,
+                COALESCE(ps.level, 1) AS level,
+                COALESCE(ps.coins, 0) AS coins,
+                COALESCE(ps.gems, 0) AS gems
+         FROM users u
+         LEFT JOIN player_saves ps ON ps.user_id = u.id
+         ORDER BY u.created_at DESC'
+    )->fetchAll();
+}
+
+function update_user_role(int $targetUserId, string $role, int $actingUserId): void
+{
+    if (!in_array($role, ['user', 'admin'], true)) {
+        throw new InvalidArgumentException('Invalid role.');
+    }
+    if ($targetUserId === $actingUserId && $role !== 'admin') {
+        throw new InvalidArgumentException('You cannot remove your own admin access.');
+    }
+    $stmt = db()->prepare('UPDATE users SET role = :role WHERE id = :id');
+    $stmt->execute([
+        ':role' => $role,
+        ':id' => $targetUserId,
+    ]);
+}
+
+function ensure_column(PDO $pdo, string $table, string $column, string $alterSql): void
+{
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name AND COLUMN_NAME = :column_name'
+    );
+    $stmt->execute([
+        ':table_name' => $table,
+        ':column_name' => $column,
+    ]);
+    if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec($alterSql);
+    }
 }
 
 function redirect_if_logged_in(): void

@@ -1,12 +1,7 @@
 <?php
 require __DIR__ . '/../api/config.php';
-$user = require_login();
+$user = require_admin();
 verify_csrf_from_post();
-
-if (strtolower($user['username']) !== 'admin') {
-    header('Location: ../menu.php');
-    exit;
-}
 
 $type = (string) ($_POST['content_type'] ?? '');
 $slug = strtolower(trim((string) ($_POST['slug'] ?? '')));

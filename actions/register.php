@@ -27,11 +27,13 @@ if (strlen($password) < 8) {
 
 try {
     $pdo = db();
+    $role = (!admin_exists($pdo) && strtolower($username) === 'admin') ? 'admin' : 'user';
     $pdo->beginTransaction();
-    $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash) VALUES (:username, :email, :password_hash)');
+    $stmt = $pdo->prepare('INSERT INTO users (username, email, role, password_hash) VALUES (:username, :email, :role, :password_hash)');
     $stmt->execute([
         ':username' => $username,
         ':email' => $email,
+        ':role' => $role,
         ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
     ]);
     $userId = (int) $pdo->lastInsertId();
@@ -39,7 +41,7 @@ try {
     $pdo->commit();
 
     session_regenerate_id(true);
-    $_SESSION['user'] = ['id' => $userId, 'username' => $username, 'email' => $email];
+    $_SESSION['user'] = ['id' => $userId, 'username' => $username, 'email' => $email, 'role' => $role];
     header('Location: ../menu.php');
     exit;
 } catch (Throwable $error) {

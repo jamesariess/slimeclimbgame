@@ -656,6 +656,64 @@ input:focus {
   gap: 12px;
 }
 
+.admin-table {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-table-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(160px, 1.4fr) 100px minmax(180px, 1.2fr) minmax(220px, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.admin-table-head {
+  color: var(--cyan);
+  font-weight: 900;
+  background: rgba(69, 239, 255, .08);
+}
+
+.admin-table form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-table select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: rgba(2, 6, 20, 0.72);
+}
+
+.role-pill {
+  display: inline-grid;
+  place-items: center;
+  width: fit-content;
+  min-width: 74px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  background: rgba(255,255,255,.1);
+}
+
+.role-pill.admin {
+  color: #06111a;
+  background: linear-gradient(135deg, var(--gold), var(--pink));
+}
+
+.role-pill.user {
+  color: #06111a;
+  background: linear-gradient(135deg, var(--lime), var(--cyan));
+}
+
 .game-page {
   overflow: hidden;
 }
@@ -701,6 +759,10 @@ button:disabled {
   .menu-hero,
   .hub-layout,
   .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table-row {
     grid-template-columns: 1fr;
   }
 
