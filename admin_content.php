@@ -135,7 +135,11 @@ require __DIR__ . '/partials/player_nav.php';
     <h2>Current Shop Items</h2>
     <div class="admin-list">
       <?php foreach ($items as $item): ?>
-        <div><strong><?php echo htmlspecialchars($item['name']); ?></strong><span><?php echo htmlspecialchars($item['slug']); ?> - <?php echo (int) $item['price_coins']; ?> coins - <?php echo htmlspecialchars($item['visual_type']); ?></span></div>
+        <div>
+          <strong><?php echo htmlspecialchars($item['name']); ?></strong>
+          <span><?php echo htmlspecialchars($item['item_type']); ?> - <?php echo htmlspecialchars($item['category']); ?> - <?php echo (int) $item['price_coins']; ?> coins</span>
+          <span>ATK <?php echo (int) $item['stat_attack']; ?> / DEF <?php echo (int) $item['stat_defense']; ?> / JMP <?php echo (int) $item['stat_jump']; ?><?php echo $item['item_type'] === 'potion' ? ' / ' . (int) $item['effect_duration_seconds'] . 's potion' : ''; ?></span>
+        </div>
       <?php endforeach; ?>
     </div>
   </section>
