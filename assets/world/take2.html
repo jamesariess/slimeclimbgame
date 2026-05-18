@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Abyss - Theme Prototype</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0208;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Press Start 2P', system-ui;
+        }
+        
+        canvas {
+            image-rendering: pixelated;
+            box-shadow: 0 0 50px #ff5500;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        
+        let WIDTH = 800;
+        let HEIGHT = 600;
+        let WORLD_HEIGHT = 2000;
+
+        let player = {
+            x: 200,
+            y: 400,
+            vx: 0,
+            vy: 0,
+            width: 36,
+            height: 32,
+            onGround: false,
+            facing: 1,
+            animTime: 0
+        };
+
+        let camera = { x: 0, y: 0 };
+        let keys = {};
+        let time = 0;
+
+        let platforms = [
+            {x: 100, y: 550, w: 600, h: 40},
+            {x: 50, y: 420, w: 280, h: 30},
+            {x: 520, y: 380, w: 250, h: 30},
+            {x: 150, y: 280, w: 180, h: 30},
+            {x: 480, y: 220, w: 220, h: 30},
+            {x: 80, y: 120, w: 300, h: 35}
+        ];
+
+        function drawBackground() {
+            // Deep cavern gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+            grad.addColorStop(0, '#1a0a22');
+            grad.addColorStop(1, '#0f0308');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            // Glowing lava cracks
+            ctx.strokeStyle = '#ff6600';
+            ctx.lineWidth = 8;
+            ctx.globalAlpha = 0.6 + Math.sin(time * 0.003) * 0.25;
+            
+            ctx.beginPath();
+            ctx.moveTo(80, 100);
+            ctx.quadraticCurveTo(250, 350, 120, 580);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(650, 50);
+            ctx.quadraticCurveTo(720, 280, 580, 520);
+            ctx.stroke();
+
+            ctx.globalAlpha = 1.0;
+
+            // Floating embers
+            ctx.fillStyle = '#ffaa44';
+            for (let i = 0; i < 12; i++) {
+                const y = (time * 0.8 + i * 80) % (HEIGHT + 100) - 50;
+                ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+                ctx.fillRect(120 + i * 55, y, 4, 4);
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawPlatform(p) {
+            const screenY = p.y - camera.y;
+
+            // Shadow
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#ff8800';
+            ctx.fillStyle = '#2a1a0f';
+            ctx.fillRect(p.x - camera.x, screenY + 12, p.w, p.h);
+
+            // Main body
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#442a1a';
+            ctx.fillRect(p.x - camera.x, screenY, p.w, p.h);
+
+            // Top glowing edge
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ffdd88';
+            ctx.fillStyle = '#ffddaa';
+            ctx.fillRect(p.x - camera.x, screenY, p.w, 10);
+
+            // Obsidian texture lines
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#331100';
+            for (let i = 20; i < p.w; i += 45) {
+                ctx.fillRect(p.x - camera.x + i, screenY + 12, 8, p.h - 15);
+            }
+        }
+
+        function drawSlime() {
+            const px = player.x - camera.x + player.width / 2;
+            const py = player.y - camera.y + player.height / 2;
+
+            ctx.save();
+            ctx.translate(px, py);
+
+            // Squish animation
+            const squish = 1 + Math.sin(player.animTime * 10) * (player.onGround ? 0.12 : 0.04);
+            ctx.scale(1, squish);
+
+            // Shadow
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = '#000000';
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.beginPath();
+            ctx.ellipse(0, 18, 22, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Slime body
+            ctx.shadowBlur = 22;
+            ctx.shadowColor = '#00ffcc';
+            ctx.fillStyle = '#22eebb';
+            ctx.beginPath();
+            ctx.ellipse(0, 2, 18, 20, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Highlight
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#88ffee';
+            ctx.beginPath();
+            ctx.ellipse(-7, -7, 8, 11, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = '#112233';
+            ctx.beginPath();
+            ctx.ellipse(-7, -3, 5, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(7, -3, 5, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye shine
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(-8, -6, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(6, -6, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function update() {
+            const SPEED = 5.5;
+            const GRAVITY = 0.75;
+            const JUMP = -16.5;
+
+            player.vx = 0;
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.vx = -SPEED;
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) player.vx = SPEED;
+
+            player.vy += GRAVITY;
+
+            // Jump
+            if ((keys[' '] || keys['ArrowUp'] || keys['w'] || keys['W']) && player.onGround) {
+                player.vy = JUMP;
+                player.onGround = false;
+            }
+
+            player.x += player.vx;
+            player.y += player.vy;
+
+            // World bounds
+            if (player.x < 20) player.x = 20;
+            if (player.x > 760) player.x = 760;
+
+            player.onGround = false;
+
+            // Platform collision
+            for (let p of platforms) {
+                if (
+                    player.x + player.width > p.x &&
+                    player.x < p.x + p.w &&
+                    player.y + player.height > p.y &&
+                    player.y < p.y + p.h
+                ) {
+                    if (player.vy >= 0 && player.y + player.height - player.vy <= p.y) {
+                        player.y = p.y - player.height;
+                        player.vy = 0;
+                        player.onGround = true;
+                    }
+                }
+            }
+
+            // Camera follow
+            camera.y = Math.max(0, player.y - HEIGHT * 0.6);
+        }
+
+        function gameLoop() {
+            time++;
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+            update();
+
+            drawBackground();
+
+            // Draw platforms
+            for (let p of platforms) {
+                drawPlatform(p);
+            }
+
+            player.animTime += 0.08;
+            drawSlime();
+
+            // Title text
+            ctx.fillStyle = '#ffccaa';
+            ctx.font = '18px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText("CORE ABYSS", WIDTH/2, 45);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Controls
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
+
+        window.onload = () => {
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
