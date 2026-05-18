@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Abyss Ladder Climb</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0208;
+            color: #ffccaa;
+            font-family: 'Press Start 2P', system-ui;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            image-rendering: pixelated;
+        }
+        
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 40px #ff6600;
+        }
+        
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            background: #1a0a1f;
+        }
+        
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .health-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 200px;
+            height: 20px;
+            border: 4px solid #ffccaa;
+            background: #330011;
+        }
+        
+        .health-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #ff3366, #ffcc00);
+            transition: width 0.3s;
+        }
+        
+        .coin-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border: 3px solid #ffee66;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #title-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(20,5,40,0.95), rgba(80,10,20,0.95));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 1s;
+        }
+        
+        h1 {
+            font-size: 42px;
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 20px #ff6600,
+                         0 0 40px #ff2200;
+            color: #ffddaa;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            margin-bottom: 60px;
+            color: #ff9966;
+        }
+        
+        button {
+            font-family: 'Press Start 2P', system-ui;
+            font-size: 20px;
+            padding: 15px 40px;
+            background: #330011;
+            color: #ffccaa;
+            border: 6px solid #ff6600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: #ff4400;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game" width="800" height="600"></canvas>
+        
+        <!-- UI Overlay -->
+        <div id="ui-overlay">
+            <div class="health-bar">
+                <div id="health-fill" class="health-fill"></div>
+            </div>
+            <div class="coin-counter">
+                <span id="coin-count">0</span> 💎
+            </div>
+        </div>
+        
+        <!-- Title Screen -->
+        <div id="title-screen">
+            <h1>CORE ABYSS</h1>
+            <div class="subtitle">LADDER CLIMB</div>
+            <button onclick="startGame()">BEGIN CLIMB</button>
+            <div class="instructions">
+                ← → or A D : Move<br>
+                SPACE / ↑ : Jump / Climb<br>
+                ↓ : Descend ladder<br>
+                Reach the top before the lava rises!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game')
+        const ctx = canvas.getContext('2d')
+        
+        let WIDTH = 800
+        let HEIGHT = 600
+        let WORLD_WIDTH = 1000
+        let WORLD_HEIGHT = 3200
+        
+        // Game variables
+        let player = {
+            x: 300,
+            y: 2600,
+            vx: 0,
+            vy: 0,
+            width: 32,
+            height: 28,
+            onGround: false,
+            onLadder: false,
+            health: 100,
+            maxHealth: 100,
+            facing: 1,
+            squish: 1,
+            animTime: 0
+        }
+        
+        let camera = { x: 0, y: 0 }
+        let keys = {}
+        let coinsCollected = 0
+        let totalCoins = 0
+        let gameState = 'title' // title, playing, gameover, win
+        let score = 0
+        let time = 0
+        
+        // Entities
+        let platforms = []
+        let ladders = []
+        let coins = []
+        let enemies = []
+        let particles = []
+        let treasures = []
+        
+        // Background layers for parallax
+        let bgLayers = []
+        
+        function createParticle(x, y, vx, vy, life, color) {
+            particles.push({x, y, vx, vy, life, maxLife: life, color})
+        }
+        
+        function initWorld() {
+            platforms = []
+            ladders = []
+            coins = []
+            enemies = []
+            particles = []
+            treasures = []
+            
+            // Ground / starting platform
+            platforms.push({x: 100, y: 2800, w: 800, h: 40, glow: '#ff8800'})
+            
+            // Main climb platforms
+            platforms.push({x: 150, y: 2400, w: 280, h: 30, glow: '#cc6600'})
+            platforms.push({x: 520, y: 2200, w: 320, h: 30, glow: '#cc6600'})
+            platforms.push({x: 80, y: 1950, w: 250, h: 30, glow: '#cc6600'})
+            platforms.push({x: 450, y: 1700, w: 380, h: 30, glow: '#cc6600'})
+            platforms.push({x: 200, y: 1450, w: 220, h: 30, glow: '#cc6600'})
+            platforms.push({x: 580, y: 1250, w: 280, h: 30, glow: '#cc6600'})
+            platforms.push({x: 120, y: 950, w: 300, h: 30, glow: '#cc6600'})
+            platforms.push({x: 500, y: 700, w: 250, h: 30, glow: '#cc6600'})
+            
+            // Boss platform
+            platforms.push({x: 250, y: 300, w: 500, h: 50, glow: '#ffaa00'})
+            
+            // Floating small platforms
+            platforms.push({x: 650, y: 2100, w: 120, h: 20, glow: '#cc6600'})
+            platforms.push({x: 50, y: 1650, w: 100, h: 20, glow: '#cc6600'})
+            platforms.push({x: 720, y: 1100, w: 140, h: 20, glow: '#cc6600'})
+            
+            // Ladders
+            ladders.push({x: 380, y: 2400, w: 28, h: 420})   // between ground and first
+            ladders.push({x: 680, y: 1950, w: 28, h: 520})
+            ladders.push({x: 220, y: 1450, w: 28, h: 520})
+            ladders.push({x: 620, y: 950, w: 28, h: 380})
+            ladders.push({x: 380, y: 500, w: 28, h: 450})
+            
+            // Coins
+            coins.push({x: 250, y: 2350, r: 12, collected: false})
+            coins.push({x: 620, y: 2150, r: 12, collected: false})
+            coins.push({x: 180, y: 1880, r: 12, collected: false})
+            coins.push({x: 720, y: 1650, r: 12, collected: false})
+            coins.push({x: 280, y: 1380, r: 12, collected: false})
+            coins.push({x: 650, y: 1180, r: 12, collected: false})
+            coins.push({x: 150, y: 880, r: 12, collected: false})
+            coins.push({x: 580, y: 620, r: 12, collected: false})
+            coins.push({x: 420, y: 420, r: 12, collected: false})
+            totalCoins = coins.length
+            
+            // Hidden coin
+            coins.push({x: 780, y: 1980, r: 12, collected: false})
+            
+            // Treasure chest
+            treasures.push({x: 680, y: 1630, w: 45, h: 32, opened: false})
+            
+            // Enemy
+            enemies.push({
+                x: 580,
+                y: 2160,
+                width: 38,
+                height: 26,
+                vx: 1.8,
+                minX: 520,
+                maxX: 800,
+                health: 1,
+                alive: true
+            })
+            
+            enemies.push({
+                x: 220,
+                y: 1410,
+                width: 38,
+                height: 26,
+                vx: -2.2,
+                minX: 80,
+                maxX: 380,
+                health: 1,
+                alive: true
+            })
+        }
+        
+        function drawBackground() {
+            // Deep cavern gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, HEIGHT)
+            grad.addColorStop(0, '#2a0a1a')
+            grad.addColorStop(1, '#11040a')
+            ctx.fillStyle = grad
+            ctx.fillRect(0, 0, WIDTH, HEIGHT)
+            
+            // Parallax distant walls
+            ctx.globalAlpha = 0.4
+            for (let i = 0; i < 8; i++) {
+                let offset = ((camera.y * 0.1) % 400) - 100
+                ctx.fillStyle = '#441122'
+                ctx.fillRect(80 + i * 110, (i * 280 + offset) % (HEIGHT + 400) - 200, 40, 180)
+            }
+            ctx.globalAlpha = 1.0
+            
+            // Lava glow at bottom
+            const lavaY = 2900 - camera.y
+            if (lavaY > -100 && lavaY < HEIGHT + 100) {
+                ctx.shadowBlur = 60
+                ctx.shadowColor = '#ff4400'
+                ctx.fillStyle = '#ff8800'
+                ctx.fillRect(0, lavaY - 20, WIDTH, HEIGHT)
+                ctx.shadowBlur = 0
+            }
+            
+            // Glowing cracks
+            ctx.strokeStyle = '#ffaa33'
+            ctx.lineWidth = 6
+            ctx.globalAlpha = 0.6 + Math.sin(time / 300) * 0.2
+            ctx.beginPath()
+            ctx.moveTo(120, 100)
+            ctx.quadraticCurveTo(300, 400, 180, 800)
+            ctx.stroke()
+            
+            ctx.beginPath()
+            ctx.moveTo(650, 200)
+            ctx.quadraticCurveTo(720, 550, 580, 920)
+            ctx.stroke()
+            ctx.globalAlpha = 1.0
+        }
+        
+        function drawPlatform(p) {
+            // Shadow
+            ctx.shadowBlur = 25
+            ctx.shadowColor = p.glow || '#ff8800'
+            ctx.fillStyle = '#331100'
+            ctx.fillRect(p.x - camera.x, p.y - camera.y + 8, p.w, p.h)
+            
+            // Main platform
+            ctx.shadowBlur = 12
+            ctx.fillStyle = '#553322'
+            ctx.fillRect(p.x - camera.x, p.y - camera.y, p.w, p.h)
+            
+            // Top highlight
+            ctx.shadowBlur = 0
+            ctx.fillStyle = '#ffddaa'
+            ctx.fillRect(p.x - camera.x, p.y - camera.y, p.w, 8)
+            
+            // Edge glow
+            ctx.shadowBlur = 15
+            ctx.shadowColor = '#ffcc66'
+            ctx.fillStyle = '#ffcc66'
+            ctx.fillRect(p.x - camera.x, p.y - camera.y, p.w, 5)
+            ctx.shadowBlur = 0
+        }
+        
+        function drawLadder(l) {
+            const lx = l.x - camera.x
+            const ly = l.y - camera.y
+            
+            // Rungs
+            ctx.strokeStyle = '#eedd99'
+            ctx.lineWidth = 6
+            for (let i = 0; i < l.h; i += 45) {
+                ctx.shadowBlur = 8
+                ctx.shadowColor = '#ffeebb'
+                ctx.beginPath()
+                ctx.moveTo(lx + 4, ly + i)
+                ctx.lineTo(lx + l.w - 4, ly + i)
+                ctx.stroke()
+            }
+            ctx.shadowBlur = 0
+            
+            // Sides
+            ctx.fillStyle = '#664422'
+            ctx.fillRect(lx, ly, 8, l.h)
+            ctx.fillRect(lx + l.w - 8, ly, 8, l.h)
+        }
+        
+        function drawSlime() {
+            const px = player.x - camera.x + player.width / 2
+            const py = player.y - camera.y + player.height / 2
+            
+            ctx.save()
+            ctx.translate(px, py)
+            
+            // Squish animation
+            const squishY = 1 + Math.sin(player.animTime * 8) * 0.08 * (player.onGround ? 1 : 0.4)
+            ctx.scale(1, squishY)
+            
+            // Body
+            ctx.shadowBlur = 20
+            ctx.shadowColor = '#44ffaa'
+            ctx.fillStyle = '#22dd99'
+            ctx.beginPath()
+            ctx.ellipse(0, 4, player.width/2 - 2, player.height/2 + 4, 0, 0, Math.PI * 2)
+            ctx.fill()
+            
+            // Highlight
+            ctx.shadowBlur = 0
+            ctx.fillStyle = '#88ffdd'
+            ctx.beginPath()
+            ctx.ellipse(-8, -6, 9, 12, 0, 0, Math.PI * 2)
+            ctx.fill()
+            
+            // Eyes
+            ctx.fillStyle = '#112233'
+            ctx.beginPath()
+            ctx.ellipse(-8, -3, 5, 8, 0, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.beginPath()
+            ctx.ellipse(8, -3, 5, 8, 0, 0, Math.PI * 2)
+            ctx.fill()
+            
+            // Eye shine
+            ctx.fillStyle = 'white'
+            ctx.beginPath()
+            ctx.arc(-9, -6, 2, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.beginPath()
+            ctx.arc(7, -6, 2, 0, Math.PI * 2)
+            ctx.fill()
+            
+            // Mouth
+            ctx.strokeStyle = '#112233'
+            ctx.lineWidth = 3
+            ctx.beginPath()
+            ctx.arc(0, 8, 8, 0.2, Math.PI - 0.2)
+            ctx.stroke()
+            
+            ctx.restore()
+        }
+        
+        function drawCoin(c) {
+            if (c.collected) return
+            const cx = c.x - camera.x
+            const cy = c.y - camera.y + Math.sin(time / 150) * 4
+            
+            ctx.shadowBlur = 15
+            ctx.shadowColor = '#ffee00'
+            ctx.fillStyle = '#ffdd22'
+            ctx.beginPath()
+            ctx.arc(cx, cy, c.r, 0, Math.PI * 2)
+            ctx.fill()
+            
+            ctx.shadowBlur = 0
+            ctx.fillStyle = '#ffee99'
+            ctx.font = 'bold 14px Arial'
+            ctx.textAlign = 'center'
+            ctx.fillText('¢', cx, cy + 5)
+        }
+        
+        function drawTreasure(t) {
+            const tx = t.x - camera.x
+            const ty = t.y - camera.y
+            
+            ctx.shadowBlur = 10
+            ctx.shadowColor = '#ffdd77'
+            
+            // Chest body
+            ctx.fillStyle = t.opened ? '#664422' : '#aa7733'
+            ctx.fillRect(tx, ty, t.w, t.h)
+            
+            // Lid
+            ctx.fillStyle = '#cc9944'
+            ctx.fillRect(tx, ty - 8, t.w, 14)
+            
+            // Lock
+            ctx.fillStyle = '#ffee88'
+            ctx.fillRect(tx + t.w/2 - 6, ty + 8, 12, 12)
+            
+            ctx.shadowBlur = 0
+        }
+        
+        function drawEnemy(e) {
+            if (!e.alive) return
+            const ex = e.x - camera.x
+            const ey = e.y - camera.y
+            
+            ctx.shadowBlur = 12
+            ctx.shadowColor = '#ff2266'
+            
+            // Body
+            ctx.fillStyle = '#aa1133'
+            ctx.fillRect(ex, ey, e.width, e.height)
+            
+            // Eyes
+            ctx.fillStyle = '#ffee66'
+            ctx.fillRect(ex + 8, ey + 8, 7, 7)
+            ctx.fillRect(ex + 24, ey + 8, 7, 7)
+            
+            ctx.shadowBlur = 0
+        }
+        
+        function updatePhysics() {
+            const GRAVITY = 0.68
+            const MOVE_SPEED = 4.8
+            const JUMP = -15.5
+            const CLIMB_SPEED = 4.2
+            
+            player.onLadder = false
+            player.onGround = false
+            
+            // Check ladder
+            for (let l of ladders) {
+                if (
+                    player.x + player.width > l.x &&
+                    player.x < l.x + l.w &&
+                    player.y + player.height > l.y &&
+                    player.y < l.y + l.h
+                ) {
+                    player.onLadder = true
+                    break
+                }
+            }
+            
+            // Horizontal movement
+            player.vx = 0
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                player.vx = -MOVE_SPEED
+                player.facing = -1
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                player.vx = MOVE_SPEED
+                player.facing = 1
+            }
+            
+            // Ladder climbing
+            if (player.onLadder) {
+                if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+                    player.vy = -CLIMB_SPEED
+                } else if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+                    player.vy = CLIMB_SPEED
+                } else {
+                    player.vy = 0
+                }
+                player.vx *= 0.6 // slow horizontal on ladder
+            } else {
+                // Gravity
+                player.vy += GRAVITY
+            }
+            
+            // Jump
+            if ((keys[' '] || keys['ArrowUp'] || keys['w'] || keys['W']) && player.onGround) {
+                player.vy = JUMP
+                player.onGround = false
+                // Jump particles
+                for (let i = 0; i < 8; i++) {
+                    createParticle(player.x + 8 + Math.random()*16, player.y + player.height - 4, 
+                                  (Math.random()-0.5)*3, Math.random()*2 - 1, 22, '#aaddff')
+                }
+            }
+            
+            // Apply velocity
+            player.x += player.vx
+            player.y += player.vy
+            
+            // World bounds
+            if (player.x < 20) player.x = 20
+            if (player.x + player.width > WORLD_WIDTH - 20) player.x = WORLD_WIDTH - 20 - player.width
+            
+            // Platform collisions
+            for (let p of platforms) {
+                // Horizontal collision
+                if (
+                    player.y + player.height > p.y &&
+                    player.y < p.y + p.h &&
+                    player.x + player.width > p.x &&
+                    player.x < p.x + p.w
+                ) {
+                    if (player.vx > 0 && player.x + player.width - player.vx <= p.x) {
+                        player.x = p.x - player.width
+                        player.vx = 0
+                    } else if (player.vx < 0 && player.x - player.vx >= p.x + p.w) {
+                        player.x = p.x + p.w
+                        player.vx = 0
+                    }
+                }
+                
+                // Vertical collision
+                if (
+                    player.x + player.width > p.x &&
+                    player.x < p.x + p.w &&
+                    player.y + player.height > p.y &&
+                    player.y < p.y + p.h
+                ) {
+                    if (player.vy >= 0 && player.y + player.height - player.vy <= p.y) {
+                        // Landing
+                        player.y = p.y - player.height
+                        player.vy = 0
+                        player.onGround = true
+                    } else if (player.vy < 0 && player.y - player.vy >= p.y + p.h) {
+                        player.y = p.y + p.h
+                        player.vy = 0.5
+                    }
+                }
+            }
+            
+            // Enemy collisions
+            for (let e of enemies) {
+                if (!e.alive) continue
+                if (
+                    player.x < e.x + e.width &&
+                    player.x + player.width > e.x &&
+                    player.y < e.y + e.height &&
+                    player.y + player.height > e.y
+                ) {
+                    // Damage player
+                    player.health -= 25
+                    // Knockback
+                    player.vx = (player.x > e.x) ? 12 : -12
+                    player.vy = -8
+                    
+                    if (player.health <= 0) {
+                        gameState = 'gameover'
+                    }
+                }
+            }
+            
+            // Coin collection
+            for (let c of coins) {
+                if (c.collected) continue
+                const dx = player.x + player.width/2 - c.x
+                const dy = player.y + player.height/2 - c.y
+                if (dx*dx + dy*dy < (player.width/2 + c.r + 10) ** 2) {
+                    c.collected = true
+                    coinsCollected++
+                    score += 100
+                    
+                    // Sparkle
+                    for (let i = 0; i < 14; i++) {
+                        createParticle(c.x, c.y, (Math.random()-0.5)*6, (Math.random()-0.5)*6, 30, '#ffee88')
+                    }
+                }
+            }
+            
+            // Treasure
+            for (let t of treasures) {
+                if (t.opened) continue
+                if (
+                    player.x < t.x + t.w &&
+                    player.x + player.width > t.x &&
+                    player.y < t.y + t.h &&
+                    player.y + player.height > t.y
+                ) {
+                    t.opened = true
+                    score += 500
+                    for (let i = 0; i < 25; i++) {
+                        createParticle(t.x + 20, t.y + 10, (Math.random()-0.5)*7, (Math.random()-0.5)*7 - 3, 45, '#ffdd44')
+                    }
+                }
+            }
+            
+            // Enemy patrol
+            for (let e of enemies) {
+                if (!e.alive) continue
+                e.x += e.vx
+                
+                if (e.x < e.minX) {
+                    e.x = e.minX
+                    e.vx = Math.abs(e.vx)
+                }
+                if (e.x > e.maxX - e.width) {
+                    e.x = e.maxX - e.width
+                    e.vx = -Math.abs(e.vx)
+                }
+            }
+            
+            // Camera follow (smooth)
+            const targetCamY = Math.max(0, player.y - HEIGHT * 0.55)
+            camera.y += (targetCamY - camera.y) * 0.12
+            camera.x = Math.max(0, Math.min(WORLD_WIDTH - WIDTH, player.x - WIDTH/2 + 40))
+        }
+        
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i]
+                p.x += p.vx
+                p.y += p.vy
+                p.life--
+                p.vy += 0.12 // gravity for some
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1)
+                }
+            }
+            
+            // Lava particles
+            if (Math.random() < 0.4) {
+                const lavaY = 2880
+                createParticle(
+                    Math.random() * WORLD_WIDTH,
+                    lavaY + Math.random() * 40 - 20,
+                    (Math.random() - 0.5) * 2,
+                    -1 - Math.random() * 4,
+                    35 + Math.random() * 25,
+                    '#ffaa33'
+                )
+            }
+        }
+        
+        function drawParticles() {
+            for (let p of particles) {
+                const alpha = p.life / p.maxLife
+                ctx.globalAlpha = alpha * 0.9
+                ctx.fillStyle = p.color
+                ctx.fillRect(p.x - camera.x, p.y - camera.y, 5, 5)
+            }
+            ctx.globalAlpha = 1.0
+        }
+        
+        function drawHUD() {
+            // Health bar on canvas too for consistency
+            ctx.fillStyle = '#440011'
+            ctx.fillRect(30, 25, 204, 24)
+            ctx.fillStyle = player.health > 30 ? '#ff3366' : '#ff1122'
+            ctx.fillRect(32, 27, player.health * 2, 20)
+            
+            // Stage title
+            ctx.font = '18px "Press Start 2P"'
+            ctx.fillStyle = '#ffcc99'
+            ctx.textAlign = 'center'
+            ctx.fillText("CORE ABYSS", WIDTH/2, 38)
+        }
+        
+        function gameLoop() {
+            time++
+            
+            ctx.save()
+            ctx.clearRect(0, 0, WIDTH, HEIGHT)
+            
+            if (gameState === 'playing') {
+                updatePhysics()
+                updateParticles()
+                
+                // Win condition
+                if (player.y < 380) {
+                    gameState = 'win'
+                }
+            }
+            
+            drawBackground()
+            
+            // Draw platforms
+            for (let p of platforms) {
+                drawPlatform(p)
+            }
+            
+            // Draw ladders
+            for (let l of ladders) {
+                drawLadder(l)
+            }
+            
+            // Draw treasures
+            for (let t of treasures) {
+                drawTreasure(t)
+            }
+            
+            // Draw enemies
+            for (let e of enemies) {
+                drawEnemy(e)
+            }
+            
+            // Draw coins
+            for (let c of coins) {
+                drawCoin(c)
+            }
+            
+            drawParticles()
+            drawSlime()
+            
+            drawHUD()
+            
+            // Lava warning text
+            if (player.y > 2400) {
+                ctx.globalAlpha = 0.7 + Math.sin(time/80) * 0.3
+                ctx.fillStyle = '#ff4422'
+                ctx.font = 'bold 22px "Press Start 2P"'
+                ctx.textAlign = 'center'
+                ctx.fillText("LAVA RISING!", WIDTH/2, 120)
+                ctx.globalAlpha = 1
+            }
+            
+            ctx.restore()
+            
+            // Update HTML UI
+            document.getElementById('health-fill').style.width = player.health + '%'
+            document.getElementById('coin-count').textContent = coinsCollected + '/' + totalCoins
+            
+            requestAnimationFrame(gameLoop)
+        }
+        
+        function startGame() {
+            document.getElementById('title-screen').style.opacity = '0'
+            setTimeout(() => {
+                document.getElementById('title-screen').style.display = 'none'
+            }, 800)
+            
+            gameState = 'playing'
+            initWorld()
+            player.x = 300
+            player.y = 2600
+            player.health = 100
+            player.vx = 0
+            player.vy = 0
+            coinsCollected = 0
+        }
+        
+        function resetGame() {
+            document.getElementById('title-screen').style.display = 'flex'
+            document.getElementById('title-screen').style.opacity = '1'
+            gameState = 'title'
+        }
+        
+        // Input
+        window.addEventListener('keydown', e => {
+            keys[e.key] = true
+            
+            if ((gameState === 'gameover' || gameState === 'win') && e.key === ' ') {
+                resetGame()
+            }
+        })
+        
+        window.addEventListener('keyup', e => {
+            keys[e.key] = false
+        })
+        
+        // Touch support for mobile (basic)
+        canvas.addEventListener('touchstart', e => {
+            if (gameState !== 'playing') return
+            const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left
+            if (touchX < WIDTH / 2) {
+                keys['ArrowLeft'] = true
+            } else {
+                keys['ArrowRight'] = true
+            }
+        })
+        
+        // Resize handler
+        function resizeCanvas() {
+            const container = document.getElementById('game-container')
+            const scale = Math.min(window.innerWidth / WIDTH, window.innerHeight / HEIGHT) * 0.95
+            container.style.transform = `scale(${scale})`
+        }
+        
+        window.addEventListener('resize', resizeCanvas)
+        
+        // Initialize
+        function init() {
+            canvas.width = WIDTH
+            canvas.height = HEIGHT
+            resizeCanvas()
+            initWorld()
+            gameLoop()
+            
+            // Demo particle burst
+            setTimeout(() => {
+                for (let i = 0; i < 30; i++) {
+                    createParticle(400 + Math.random()*200 - 100, 800, 
+                                  Math.random()*6-3, Math.random()*4-6, 60, '#ffcc77')
+                }
+            }, 400)
+        }
+        
+        // Start
+        window.onload = init
+    </script>
+</body>
+</html>
