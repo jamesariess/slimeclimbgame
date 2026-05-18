@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Core Abyss - Theme Prototype</title>
+    <title>Core Abyss - Vertical Prototype</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -34,11 +34,11 @@
         
         let WIDTH = 800;
         let HEIGHT = 600;
-        let WORLD_HEIGHT = 2000;
+        let WORLD_HEIGHT = 2800;   // Much taller now
 
         let player = {
-            x: 200,
-            y: 400,
+            x: 150,
+            y: 650,
             vx: 0,
             vy: 0,
             width: 36,
@@ -53,45 +53,58 @@
         let time = 0;
 
         let platforms = [
-            {x: 100, y: 550, w: 600, h: 40},
-            {x: 50, y: 420, w: 280, h: 30},
-            {x: 520, y: 380, w: 250, h: 30},
-            {x: 150, y: 280, w: 180, h: 30},
-            {x: 480, y: 220, w: 220, h: 30},
-            {x: 80, y: 120, w: 300, h: 35}
+            // Starting ground
+            {x: 50, y: 750, w: 700, h: 40},
+            
+            // First layer platforms
+            {x: 80, y: 580, w: 260, h: 30},
+            {x: 480, y: 520, w: 220, h: 30},
+            
+            // Stairs / stepped path to second layer
+            {x: 620, y: 650, w: 80, h: 20},
+            {x: 680, y: 590, w: 70, h: 20},
+            {x: 720, y: 530, w: 60, h: 20},
+            
+            // Second layer platforms (higher up)
+            {x: 100, y: 380, w: 240, h: 30},
+            {x: 420, y: 320, w: 280, h: 30},
+            {x: 50, y: 220, w: 180, h: 30},
+            {x: 550, y: 180, w: 200, h: 30},
+            
+            // Third teaser layer
+            {x: 200, y: 80, w: 300, h: 35}
         ];
 
         function drawBackground() {
-            // Deep cavern gradient
             const grad = ctx.createLinearGradient(0, 0, 0, HEIGHT);
             grad.addColorStop(0, '#1a0a22');
-            grad.addColorStop(1, '#0f0308');
+            grad.addColorStop(1, '#0a0208');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-            // Glowing lava cracks
+            // Lava cracks
             ctx.strokeStyle = '#ff6600';
-            ctx.lineWidth = 8;
-            ctx.globalAlpha = 0.6 + Math.sin(time * 0.003) * 0.25;
+            ctx.lineWidth = 9;
+            ctx.globalAlpha = 0.5 + Math.sin(time * 0.004) * 0.3;
             
             ctx.beginPath();
-            ctx.moveTo(80, 100);
-            ctx.quadraticCurveTo(250, 350, 120, 580);
+            ctx.moveTo(120, 200);
+            ctx.quadraticCurveTo(300, 600, 150, 900);
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.moveTo(650, 50);
-            ctx.quadraticCurveTo(720, 280, 580, 520);
+            ctx.moveTo(650, 100);
+            ctx.quadraticCurveTo(720, 450, 580, 850);
             ctx.stroke();
 
             ctx.globalAlpha = 1.0;
 
             // Floating embers
             ctx.fillStyle = '#ffaa44';
-            for (let i = 0; i < 12; i++) {
-                const y = (time * 0.8 + i * 80) % (HEIGHT + 100) - 50;
-                ctx.globalAlpha = 0.3 + Math.random() * 0.4;
-                ctx.fillRect(120 + i * 55, y, 4, 4);
+            for (let i = 0; i < 18; i++) {
+                const y = (time * 1.2 + i * 65) % (HEIGHT + 200) - 50;
+                ctx.globalAlpha = 0.2 + Math.random() * 0.5;
+                ctx.fillRect(80 + (i * 42) % 720, y, 5, 5);
             }
             ctx.globalAlpha = 1.0;
         }
@@ -99,28 +112,25 @@
         function drawPlatform(p) {
             const screenY = p.y - camera.y;
 
-            // Shadow
             ctx.shadowBlur = 30;
             ctx.shadowColor = '#ff8800';
             ctx.fillStyle = '#2a1a0f';
             ctx.fillRect(p.x - camera.x, screenY + 12, p.w, p.h);
 
-            // Main body
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 18;
             ctx.fillStyle = '#442a1a';
             ctx.fillRect(p.x - camera.x, screenY, p.w, p.h);
 
-            // Top glowing edge
-            ctx.shadowBlur = 20;
+            // Glowing top edge
+            ctx.shadowBlur = 22;
             ctx.shadowColor = '#ffdd88';
             ctx.fillStyle = '#ffddaa';
             ctx.fillRect(p.x - camera.x, screenY, p.w, 10);
 
-            // Obsidian texture lines
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#331100';
-            for (let i = 20; i < p.w; i += 45) {
-                ctx.fillRect(p.x - camera.x + i, screenY + 12, 8, p.h - 15);
+            for (let i = 25; i < p.w - 20; i += 38) {
+                ctx.fillRect(p.x - camera.x + i, screenY + 14, 7, p.h - 18);
             }
         }
 
@@ -131,27 +141,23 @@
             ctx.save();
             ctx.translate(px, py);
 
-            // Squish animation
-            const squish = 1 + Math.sin(player.animTime * 10) * (player.onGround ? 0.12 : 0.04);
+            const squish = 1 + Math.sin(player.animTime * 10) * (player.onGround ? 0.13 : 0.05);
             ctx.scale(1, squish);
 
-            // Shadow
             ctx.shadowBlur = 25;
-            ctx.shadowColor = '#000000';
+            ctx.shadowColor = '#000';
             ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.beginPath();
             ctx.ellipse(0, 18, 22, 8, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Slime body
-            ctx.shadowBlur = 22;
+            ctx.shadowBlur = 24;
             ctx.shadowColor = '#00ffcc';
             ctx.fillStyle = '#22eebb';
             ctx.beginPath();
             ctx.ellipse(0, 2, 18, 20, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Highlight
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#88ffee';
             ctx.beginPath();
@@ -160,29 +166,20 @@
 
             // Eyes
             ctx.fillStyle = '#112233';
-            ctx.beginPath();
-            ctx.ellipse(-7, -3, 5, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(7, -3, 5, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.ellipse(-7, -3, 5, 8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(7, -3, 5, 8, 0, 0, Math.PI * 2); ctx.fill();
 
-            // Eye shine
             ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(-8, -6, 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(6, -6, 2, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(-8.5, -6, 2.2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(5.5, -6, 2.2, 0, Math.PI * 2); ctx.fill();
 
             ctx.restore();
         }
 
         function update() {
-            const SPEED = 5.5;
-            const GRAVITY = 0.75;
-            const JUMP = -16.5;
+            const SPEED = 5.8;
+            const GRAVITY = 0.78;
+            const JUMP = -16.8;
 
             player.vx = 0;
             if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.vx = -SPEED;
@@ -190,7 +187,6 @@
 
             player.vy += GRAVITY;
 
-            // Jump
             if ((keys[' '] || keys['ArrowUp'] || keys['w'] || keys['W']) && player.onGround) {
                 player.vy = JUMP;
                 player.onGround = false;
@@ -199,13 +195,13 @@
             player.x += player.vx;
             player.y += player.vy;
 
-            // World bounds
+            // Boundaries
             if (player.x < 20) player.x = 20;
-            if (player.x > 760) player.x = 760;
+            if (player.x + player.width > 780) player.x = 780 - player.width;
 
             player.onGround = false;
 
-            // Platform collision
+            // Collision
             for (let p of platforms) {
                 if (
                     player.x + player.width > p.x &&
@@ -221,8 +217,8 @@
                 }
             }
 
-            // Camera follow
-            camera.y = Math.max(0, player.y - HEIGHT * 0.6);
+            // Smooth camera (vertical focus)
+            camera.y = Math.max(0, Math.min(WORLD_HEIGHT - HEIGHT, player.y - HEIGHT * 0.55));
         }
 
         function gameLoop() {
@@ -233,30 +229,28 @@
 
             drawBackground();
 
-            // Draw platforms
             for (let p of platforms) {
                 drawPlatform(p);
             }
 
-            player.animTime += 0.08;
+            player.animTime += 0.085;
             drawSlime();
 
-            // Title text
+            // UI Text
             ctx.fillStyle = '#ffccaa';
             ctx.font = '18px "Press Start 2P"';
             ctx.textAlign = 'center';
             ctx.fillText("CORE ABYSS", WIDTH/2, 45);
+            ctx.font = '12px "Press Start 2P"';
+            ctx.fillText("↑ CLIMB HIGHER", WIDTH/2, 72);
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Controls
         window.addEventListener('keydown', e => keys[e.key] = true);
         window.addEventListener('keyup', e => keys[e.key] = false);
 
-        window.onload = () => {
-            gameLoop();
-        };
+        window.onload = () => gameLoop();
     </script>
 </body>
 </html>
